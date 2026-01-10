@@ -1,0 +1,52 @@
+name: ci
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{github.ref}}
+  cancel-in-progress: true
+jobs:
+  build:
+    name: build
+    runs-on: macos-latest
+    steps:
+      - name: チェックアウト
+        uses: actions/checkout@4
+      - name: Ninjaを用意
+        run: brew install ninja
+      - name: Configure
+        run: cmake -S . -B build/dev -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+      - name: Build
+        run: cmake --build build/dev
+  tests:
+    name: tests
+    runs-on: macos-latest
+    steps:
+      - name: チェックアウト
+        uses: actions/checkout@4
+      - name: Ninjaを用意
+        uses: brew install ninja
+      - name: Configure
+        run: cmake -S . -B build/dev -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+      - name: Build
+        run: cmake --build build/dev
+      - name: CTest
+        run: ctest --test-dir build/dev --output-on-failure
+  tidy:
+    name: tidy
+    runs-on: macos-latest
+    steps:
+      - name: チェックアウト
+        uses: actions/checkout@4
+      - name: NinjaとLLVMを用意
+        run: brew install ninja llvm
+      - name: clang-tidyをPATHに追加
+        run: echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
+      - name: Configure
+        run: cmake -S . -B build/tidy -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_CXX_CLANG_TIDY=clang-tidy
+      - name: Build
+        run: cmake --build build/tidy
