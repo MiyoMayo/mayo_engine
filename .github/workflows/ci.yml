@@ -15,7 +15,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: チェックアウト
-        uses: actions/checkout@4
+        uses: actions/checkout@v4
       - name: Ninjaを用意
         run: brew install ninja
       - name: Configure
@@ -27,7 +27,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: チェックアウト
-        uses: actions/checkout@4
+        uses: actions/checkout@v4
       - name: Ninjaを用意
         run: brew install ninja
       - name: Configure
@@ -41,7 +41,7 @@ jobs:
     runs-on: macos-latest
     steps:
       - name: チェックアウト
-        uses: actions/checkout@4
+        uses: actions/checkout@v4
       - name: NinjaとLLVMを用意
         run: brew install ninja llvm
       - name: clang-tidyをPATHに追加
