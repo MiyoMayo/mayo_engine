@@ -39,6 +39,17 @@
                 "CMAKE_BUILD_TYPE": "Release",
                 "CMAKE_INSTALL_PREFIX": "${sourceDir}/staging/release"
             }
+        },
+        {
+            "name": "tidy",
+            "displayName": "tidy (RelWithDebInfo + clang-tidy)",
+            "inherits": "base",
+            "binaryDir": "${sourceDir}/build/tidy",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/staging/tidy}",
+                "CMAKE_CXX_CLANG_TIDY": "clang-tidy"
+            }
         }
     ],
     "buildPresets": [
@@ -53,6 +64,10 @@
         {
             "name": "release",
             "configurePreset": "release"
+        },
+        {
+            "name": "tidy",
+            "configurePreset": "tidy"
         },
         {
             "name": "install-dev",
