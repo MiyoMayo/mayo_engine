@@ -32,7 +32,7 @@ endif()
 if(BUILD_TESTING)
   add_executable(tests tests/main.cpp)
   target_link_libraries(tests PRIVATE ${PROJECT_NAME})
-  add_test(NAME unit COMMAND tests)
+  add_test(NAME unit COMMAND tests/main.cpp)
 endif()
 
 # install
