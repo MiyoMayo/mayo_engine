@@ -1,7 +1,7 @@
 ---
 name: Feature request
 about: 機能要望・改善案
-labels: feature
+labels: "type: feature"
 ---
 
 ## 目的

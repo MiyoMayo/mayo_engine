@@ -1,7 +1,7 @@
 ---
 name: Bug report
 about: 不具合報告
-labels: bug
+labels: "type: bug"
 ---
 
 ## 概要
