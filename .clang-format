@@ -12,6 +12,8 @@ AllowShortFunctionsOnASingleLine: InlineOnly
 BreakBeforeBraces: Attach
 SortIncludes: true
 IncludeBlocks: Preserve
+IncludeIsMainRegex: "$"
+SortUsingDeclarations: Never
 SpaceBeforeParens: ControlStatements
 Cpp11BracedListStyle: true
 Standard: Latest
