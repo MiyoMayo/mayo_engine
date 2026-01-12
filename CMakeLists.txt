@@ -32,7 +32,7 @@ if(BUILD_TESTING)
   add_subdirectory(tests)
 endif()
 
-# install
+# プロジェクトをインストール
 include(GNUInstallDirs)
 install(
   TARGETS ${PROJECT_NAME}
@@ -42,3 +42,28 @@ install(
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 install(DIRECTORY src/public/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+set(_pkg_dir "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}")
+
+install(
+  EXPORT ${PROJECT_NAME}Targets
+  FILE ${PROJECT_NAME}Targets.cmake
+  NAMESPACE ${PROJECT_NAME}::
+  DESTINATION "${_pkg_dir}")
+
+# Config/Versionをインストール
+include(CMakePackageConfigHelpers)
+
+configure_package_config_file(
+  cmake/PackageConfig.cmake.in
+  "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
+  INSTALL_DESTINATION "${_pkg_dir}")
+
+write_basic_package_version_file(
+  "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
+  VERSION "${PROJECT_VERSION}"
+  COMPATIBILITY SameMinorVersion)
+
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
+              "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
+        DESTINATION "${_pkg_dir}")
