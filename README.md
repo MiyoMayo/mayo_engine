@@ -10,7 +10,7 @@
 - Ninja
 - Clang21
 
-# ビルド
+# コマンド
 
 ## Configure
 
