@@ -45,3 +45,15 @@ rm -rf build/{debug/dev/release/tidy}
 ```sh
 rm -rf staging/{debug/dev/release}
 ```
+
+# コミットメッセージPrefix
+
+- feat: 機能追加
+- fix: バグ修正
+- docs: READMEなどのドキュメント
+- test: テスト追加/修正
+- build: CMake/Presets/依存/ビルドシステム
+- ci: GitHub ActionsなどのCI設定
+- chore: 雑務(テンプレ更新、ツール設定、リネーム等)
+- style: 整形のみ
+- refactor: コード整理
