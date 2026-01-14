@@ -47,7 +47,7 @@
             "binaryDir": "${sourceDir}/build/tidy",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "RelWithDebInfo",
-                "CMAKE_INSTALL_PREFIX": "${sourceDir}/staging/tidy}",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/staging/tidy",
                 "CMAKE_CXX_CLANG_TIDY": "clang-tidy"
             }
         }
