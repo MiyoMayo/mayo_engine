@@ -5,7 +5,34 @@ function(add_unit_test source_file)
   add_executable(${target} "${source_file}")
   target_compile_options(${target} PRIVATE -UNDEBUG)
   target_link_libraries(${target} PRIVATE ${PROJECT_NAME})
-add_test(NAME "unit_${stem}" COMMAND ${target})
+  set_target_properties(
+    ${target}
+    PROPERTIES CXX_STANDARD 26
+               CXX_STANDARD_REQUIRED YES
+               CXX_EXTENSIONS NO)
+
+  if(APPLE)
+    set_property(TARGET ${target} PROPERTY OSX_ARCHITECTURES "arm64")
+  endif()
+
+  add_test(NAME "unit_${stem}" COMMAND ${target})
 endfunction()
 
 add_unit_test(types/concepts.cpp)
+add_unit_test(concepts/cv.cpp)
+add_unit_test(concepts/destruct.cpp)
+add_unit_test(concepts/literals.cpp)
+add_unit_test(concepts/ref.cpp)
+add_unit_test(memory/address.cpp)
+add_unit_test(memory/construct.cpp)
+add_unit_test(memory/destroy.cpp)
+add_unit_test(type_traits/copy_trait.cpp)
+add_unit_test(type_traits/remove_cvref.cpp)
+add_unit_test(types/container/option.cpp)
+add_unit_test(types/container/variant.cpp)
+add_unit_test(types/core/basic_types.cpp)
+add_unit_test(types/core/byte.cpp)
+add_unit_test(types/core/conditional.cpp)
+add_unit_test(types/core/constant.cpp)
+add_unit_test(utility/place_tag.cpp)
+add_unit_test(utility/transfer.cpp)
