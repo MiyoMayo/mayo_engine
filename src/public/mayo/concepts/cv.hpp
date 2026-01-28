@@ -1,6 +1,9 @@
 #pragma once
 
 namespace mayo::concepts {
-template <class T>
-concept is_const = (__is_const(T));
+    /**
+     * const修飾型かを判定する
+     */
+    template <class T>
+    concept is_const = (__is_const(T));
 }

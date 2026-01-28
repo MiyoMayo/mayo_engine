@@ -13,9 +13,17 @@
 
 namespace mayo {
 namespace types::container {
+    /**
+     * 値があるかもしれないコンテナ
+     *
+     * @tparam T 格納する型
+     */
     template <class T>
     class Option {
       private:
+        /**
+         * 値の生存領域
+         */
         union Storage {
             constexpr Storage(Valueless) noexcept
                 : dummy{} {}
@@ -35,10 +43,18 @@ namespace types::container {
         };
 
       public:
+        /**
+         * 値なしで構築する
+         */
         constexpr Option()
             : storage{VALUELESS}
             , has_value{false} {}
 
+        /**
+         * 値をムーブ構築する
+         *
+         * @param value 格納する値
+         */
         constexpr Option(T&& value)
             : storage{IN_PLACE, mayo::forward<T>(value)}
             , has_value{true} {}
@@ -48,34 +64,57 @@ namespace types::container {
         constexpr Option& operator=(const Option&) = default;
         constexpr Option& operator=(Option&&) = default;
 
+        /**
+         * 値を破棄する
+         */
         constexpr ~Option() {
             destroy();
         }
 
+        /**
+         * 値が存在するか
+         */
         constexpr auto is_some() const noexcept -> bool {
             return has_value;
         }
 
+        /**
+         * 値が存在しないか
+         */
         constexpr auto is_none() const noexcept -> bool {
             return !has_value;
         }
 
+        /**
+         * 値を取り出す
+         *
+         * @note 値が無い場合はassertで停止する
+         */
         template <class Self>
         constexpr auto unwrap(this Self&& self) -> decltype(auto) {
             assert(self.has_value);
             return mayo::forward_like<Self>(self.storage.value);
         }
 
+        /**
+         * 値参照の取得
+         */
         template <class Self>
         constexpr auto operator*(this Self&& self) -> decltype(auto) {
             return mayo::forward_like<Self>(self.unwrap());
         }
 
+        /**
+         * 値の有無をboolとして取得
+         */
         constexpr operator bool() const noexcept {
             return has_value;
         }
 
       private:
+        /**
+         * 値を再構築する
+         */
         template <class... Args>
         constexpr auto emplace(Args&&... args) -> T& {
             destroy();
@@ -87,6 +126,9 @@ namespace types::container {
             return *ptr;
         }
 
+        /**
+         * 値があれば破棄する
+         */
         constexpr auto destroy() -> void {
             if (!has_value) {
                 return;
@@ -106,6 +148,9 @@ namespace types::container {
 
 using types::container::Option;
 
+/**
+ * Optionの簡易チェック
+ */
 constexpr auto check() -> bool {
     constexpr auto O0 = Option<i32>{};
     static_assert(O0.is_none());

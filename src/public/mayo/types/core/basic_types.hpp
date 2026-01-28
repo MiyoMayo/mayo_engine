@@ -5,21 +5,65 @@
 
 namespace mayo {
 namespace types::core {
-using i8 = std::int8_t;
-using i16 = std::int16_t;
-using i32 = std::int32_t;
-using i64 = std::int64_t;
+    /**
+     * 符号付き8bit整数型
+     */
+    using i8 = std::int8_t;
 
-using u8 = std::uint8_t;
-using u16 = std::uint16_t;
-using u32 = std::uint32_t;
-using u64 = std::uint64_t;
+    /**
+     * 符号付き16bit整数型
+     */
+    using i16 = std::int16_t;
 
-using isize = std::ptrdiff_t;
-using usize = std::size_t;
+    /**
+     * 符号付き32bit整数型
+     */
+    using i32 = std::int32_t;
 
-using f32 = float;
-using f64 = double;
+    /**
+     * 符号付き64bit整数型
+     */
+    using i64 = std::int64_t;
+
+    /**
+     * 符号なし8bit整数型
+     */
+    using u8 = std::uint8_t;
+
+    /**
+     * 符号なし16bit整数型
+     */
+    using u16 = std::uint16_t;
+
+    /**
+     * 符号なし32bit整数型
+     */
+    using u32 = std::uint32_t;
+
+    /**
+     * 符号なし64bit整数型
+     */
+    using u64 = std::uint64_t;
+
+    /**
+     * 符号付きサイズ型
+     */
+    using isize = std::ptrdiff_t;
+
+    /**
+     * 符号なしサイズ型
+     */
+    using usize = std::size_t;
+
+    /**
+     * 32bit浮動小数点型
+     */
+    using f32 = float;
+
+    /**
+     * 64bit浮動小数点型
+     */
+    using f64 = double;
 } // namespace types::core
 
 using types::core::i8;

@@ -2,9 +2,15 @@
 
 namespace mayo {
 namespace type_traits {
+    /**
+     * 参照修飾を除去した型
+     */
     template <class T>
     using remove_ref = __remove_reference_t(T);
 
+    /**
+     * const/volatile修飾を除去した型
+     */
     template <class T>
     using remove_cv = __remove_cv(T);
 } // namespace type_traits

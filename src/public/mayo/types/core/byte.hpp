@@ -4,6 +4,9 @@
 
 namespace mayo {
 namespace types::core {
+    /**
+     * バイトを表す型
+     */
     enum class Byte : u8 {
     };
 } // namespace types::core

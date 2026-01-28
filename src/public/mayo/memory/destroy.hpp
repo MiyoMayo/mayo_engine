@@ -7,6 +7,12 @@
 
 namespace mayo {
 namespace memory {
+    /**
+     * 指定アドレスのオブジェクトを破棄する
+     *
+     * @tparam T 破棄する型
+     * @param ptr 対象アドレス
+     */
     template <class T>
     constexpr auto destroy_at(T* ptr) -> void {
         assert(ptr != nullptr);
@@ -18,6 +24,12 @@ namespace memory {
         ptr->~T();
     }
 
+    /**
+     * 配列オブジェクトを要素ごとに破棄する
+     *
+     * @tparam T 配列型
+     * @param ptr 対象アドレス
+     */
     template <concepts::is_array T>
     constexpr auto destroy_at(T* ptr) -> void {
         assert(ptr != nullptr);
