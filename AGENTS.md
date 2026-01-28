@@ -5,7 +5,7 @@
 - 優先：シンプルさ / 明示性 / 反復速度
 
 ## 前提
-- C++23 / clang / CMake + Ninja
+- C++26 / clang / CMake + Ninja
 - 対象：M1+ macOS
 - 主要依存：SDL3
 

@@ -1,12 +1,15 @@
 #pragma once
 
+#include "mayo/memory/address.hpp"
+#include "mayo/memory/construct.hpp"
+#include "mayo/memory/destroy.hpp"
 #include "mayo/types/core/basic_types.hpp"
-#include "mayo/utility/tag.hpp"
+#include "mayo/types/core/byte.hpp"
+#include "mayo/utility/place_tag.hpp"
+#include "mayo/utility/transfer.hpp"
 #include <cassert>
 #include <cstddef>
-#include <memory>
 #include <string>
-#include <utility>
 
 namespace mayo {
 namespace types::container {
@@ -14,12 +17,12 @@ namespace types::container {
     class Option {
       private:
         union Storage {
-            constexpr Storage(utility::Valueless) noexcept
+            constexpr Storage(Valueless) noexcept
                 : dummy{} {}
 
             template <class... Args>
-            constexpr Storage(std::in_place_t, Args&&... args)
-                : value{std::forward<Args>(args)...} {}
+            constexpr Storage(InPlace, Args&&... args)
+                : value{mayo::forward<Args>(args)...} {}
 
             constexpr Storage(const Storage&) = default;
             constexpr Storage(Storage&&) = default;
@@ -28,16 +31,16 @@ namespace types::container {
             constexpr ~Storage() {}
 
             T value;
-            std::byte dummy;
+            Byte dummy;
         };
 
       public:
         constexpr Option()
-            : storage{utility::VALUELESS}
+            : storage{VALUELESS}
             , has_value{false} {}
 
         constexpr Option(T&& value)
-            : storage{std::in_place, std::forward<T>(value)}
+            : storage{IN_PLACE, mayo::forward<T>(value)}
             , has_value{true} {}
 
         constexpr Option(const Option&) = default;
@@ -60,12 +63,12 @@ namespace types::container {
         template <class Self>
         constexpr auto unwrap(this Self&& self) -> decltype(auto) {
             assert(self.has_value);
-            return std::forward_like<Self>(self.storage.value);
+            return mayo::forward_like<Self>(self.storage.value);
         }
 
         template <class Self>
         constexpr auto operator*(this Self&& self) -> decltype(auto) {
-            return std::forward_like<Self>(self.unwrap());
+            return mayo::forward_like<Self>(self.unwrap());
         }
 
         constexpr operator bool() const noexcept {
@@ -78,7 +81,7 @@ namespace types::container {
             destroy();
 
             auto* ptr
-                = std::construct_at(std::addressof(storage.value), std::forward<Args>(args)...);
+                = mayo::construct_at(mayo::addressof(storage.value), mayo::forward<Args>(args)...);
             has_value = true;
 
             return *ptr;
@@ -89,9 +92,9 @@ namespace types::container {
                 return;
             }
 
-            std::destroy_at(std::addressof(storage.value));
+            mayo::destroy_at(mayo::addressof(storage.value));
 
-            std::construct_at(std::addressof(storage.dummy), std::byte{});
+            mayo::construct_at(mayo::addressof(storage.dummy), Byte{});
             has_value = false;
         }
 
@@ -118,7 +121,7 @@ constexpr auto check() -> bool {
 
     auto o4 = o3;
     assert(o3);
-    auto o5 = std::move(o3);
+    auto o5 = move(o3);
     assert(o4);
 
     auto o6 = Option<std::string>{""};

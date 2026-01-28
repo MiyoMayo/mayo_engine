@@ -5,7 +5,7 @@
 ## Stack
 
 - SDL3.4
-- C++23
+- ~~C++23~~ → C++26
 - CMake4
 - Ninja
 - Clang21

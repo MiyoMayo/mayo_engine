@@ -5,11 +5,6 @@ project(
   VERSION 0.1.0
   LANGUAGES CXX)
 
-# 言語設定
-set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
-
 # ライブラリ本体
 add_library(${PROJECT_NAME} STATIC src/private/mayo.cpp)
 
@@ -18,6 +13,13 @@ target_include_directories(
   PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/public>
          $<INSTALL_INTERFACE:include>
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/private)
+
+# 言語設定
+set_target_properties(
+  ${PROJECT_NAME}
+  PROPERTIES CXX_STANDARD 26
+             CXX_STANDARD_REQUIRED YES
+             CXX_EXTENSIONS NO)
 
 # Apple Silicon対応
 if(APPLE)
