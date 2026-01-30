@@ -16,5 +16,9 @@ auto main() -> mayo::i32 {
     static_assert(std::is_same_v<RemoveCv, int>);
     static_assert(!std::is_same_v<mayo::remove_cv<const int>, const int>);
 
+    using RemoveCvRef = mayo::remove_cvref<const int&>;
+    static_assert(std::is_same_v<RemoveCvRef, int>);
+    static_assert(!std::is_same_v<RemoveCvRef, const int>);
+
     return 0;
 }

@@ -15,7 +15,7 @@ namespace memory {
      */
     template <class T, class... Args>
     constexpr auto construct_at(T* address, Args&&... args) -> T* {
-        return ::new (static_cast<void*>(address)) T{forward<Args>(args)...};
+        return ::new (static_cast<void*>(address)) T{mayo::forward<Args>(args)...};
     }
 
 } // namespace memory

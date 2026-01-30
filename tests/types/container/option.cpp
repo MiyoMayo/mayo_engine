@@ -3,6 +3,9 @@
 #include <mayo/utility/transfer.hpp>
 
 #include <cassert>
+#include <string>
+#include <type_traits>
+#include <utility>
 
 struct Counted {
     inline static int destroyed = 0;
@@ -22,11 +25,27 @@ struct Counted {
     }
 };
 
+struct NoThrowMove {
+    NoThrowMove() = default;
+    NoThrowMove(NoThrowMove&&) noexcept = default;
+};
+
+struct ThrowMove {
+    ThrowMove() = default;
+    ThrowMove(ThrowMove&&) noexcept(false) {}
+};
+
 auto main() -> mayo::i32 {
     {
         constexpr mayo::Option<mayo::i32> NONE{};
         static_assert(NONE.is_none());
         static_assert(!NONE.is_some());
+    }
+
+    {
+        auto none = mayo::Option<mayo::i32>{mayo::NONE};
+        assert(none.is_none());
+        assert(!none.is_some());
     }
 
     {
@@ -51,12 +70,23 @@ auto main() -> mayo::i32 {
 
     {
         mayo::Option<mayo::i32> a{42};
-        mayo::Option<mayo::i32> b = a;
+        mayo::Option<mayo::i32>& b{a};
         assert(*b == 42);
 
-        mayo::Option<mayo::i32> c = mayo::move(a);
+        mayo::Option<mayo::i32> c{mayo::move(a)};
         assert(c.is_some());
         assert(*c == 42);
+    }
+
+    {
+        static_assert(std::is_constructible_v<mayo::Option<std::string>, const char*>);
+        static_assert(!std::is_convertible_v<const char*, mayo::Option<std::string>>);
+        static_assert(!std::is_constructible_v<mayo::Option<mayo::i32>, std::string>);
+
+        static_assert(
+            noexcept(mayo::Option<NoThrowMove>{std::declval<mayo::Option<NoThrowMove>&&>()}));
+        static_assert(
+            !noexcept(mayo::Option<ThrowMove>{std::declval<mayo::Option<ThrowMove>&&>()}));
     }
 
     return 0;

@@ -13,8 +13,15 @@ namespace type_traits {
      */
     template <class T>
     using remove_cv = __remove_cv(T);
+
+    /**
+     * const/volatile/参照修飾を除去した型
+     */
+    template <class T>
+    using remove_cvref = remove_cv<remove_ref<T>>;
 } // namespace type_traits
 
 using type_traits::remove_ref;
 using type_traits::remove_cv;
+using type_traits::remove_cvref;
 }; // namespace mayo

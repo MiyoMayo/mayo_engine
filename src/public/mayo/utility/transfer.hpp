@@ -37,9 +37,9 @@ namespace utility {
     template <class Original, class T>
     constexpr auto forward_like(T&& value) noexcept
         -> forward_like_type<Original, decltype(value)> {
-            using Return = forward_like_type<Original, decltype(value)>;
-            return static_cast<Return>(value);
-        }
+        using Return = forward_like_type<Original, decltype(value)>;
+        return static_cast<Return>(value);
+    }
 } // namespace utility
 
 using utility::move;

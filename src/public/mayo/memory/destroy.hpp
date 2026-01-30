@@ -39,7 +39,7 @@ namespace memory {
         }
 
         for (auto&& v : *ptr) {
-            destroy_at(addressof(v));
+            destroy_at(mayo::addressof(v));
         }
     }
 } // namespace memory
