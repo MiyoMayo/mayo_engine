@@ -27,6 +27,7 @@ endfunction()
 
 add_unit_test(types/concepts.cpp)
 add_unit_test(concepts/cv.cpp)
+add_unit_test(concepts/assign.cpp)
 add_unit_test(concepts/construct.cpp)
 add_unit_test(concepts/destruct.cpp)
 add_unit_test(concepts/literals.cpp)

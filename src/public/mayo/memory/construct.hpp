@@ -1,5 +1,6 @@
 #pragma once
 
+#include "mayo/concepts/construct.hpp"
 #include "mayo/utility/transfer.hpp"
 #include <new>
 
@@ -14,7 +15,8 @@ namespace memory {
      * @param args コンストラクタ引数
      */
     template <class T, class... Args>
-    constexpr auto construct_at(T* address, Args&&... args) -> T* {
+    constexpr auto construct_at(T* address, Args&&... args)
+        noexcept(concepts::is_nothrow_constructible<T, Args...>) -> T* {
         return ::new (static_cast<void*>(address)) T{mayo::forward<Args>(args)...};
     }
 

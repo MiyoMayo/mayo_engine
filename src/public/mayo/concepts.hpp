@@ -1,5 +1,6 @@
 #pragma once
 
+#include "mayo/concepts/assign.hpp"
 #include "mayo/concepts/construct.hpp"
 #include "mayo/concepts/cv.hpp"
 #include "mayo/concepts/destruct.hpp"

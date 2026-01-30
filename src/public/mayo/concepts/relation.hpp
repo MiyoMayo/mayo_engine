@@ -1,6 +1,7 @@
 #pragma once
 
 namespace mayo::concepts {
+
     /**
      * BaseがTの基底型かを判定する
      */

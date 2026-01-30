@@ -28,6 +28,7 @@ struct Counted {
 struct NoThrowMove {
     NoThrowMove() = default;
     NoThrowMove(NoThrowMove&&) noexcept = default;
+    auto operator=(NoThrowMove&&) noexcept -> NoThrowMove& = default;
 };
 
 struct ThrowMove {
@@ -76,17 +77,42 @@ auto main() -> mayo::i32 {
         mayo::Option<mayo::i32> c{mayo::move(a)};
         assert(c.is_some());
         assert(*c == 42);
+
+        mayo::Option<mayo::i32> d{mayo::NONE};
+        d = *b;
+        assert(d.is_some());
+        assert(*d == 42);
+
+        mayo::Option<mayo::i32> e{mayo::NONE};
+        e = mayo::move(b);
+        assert(e.is_some());
+        assert(*e == 42);
+
+        e = mayo::NONE;
+        assert(e.is_none());
+
+        e = 7;
+        assert(e.is_some());
+        assert(*e == 7);
     }
 
     {
         static_assert(std::is_constructible_v<mayo::Option<std::string>, const char*>);
         static_assert(!std::is_convertible_v<const char*, mayo::Option<std::string>>);
         static_assert(!std::is_constructible_v<mayo::Option<mayo::i32>, std::string>);
+        static_assert(std::is_assignable_v<mayo::Option<std::string>&, const char*>);
+        static_assert(!std::is_assignable_v<mayo::Option<mayo::i32>&, std::string>);
+        static_assert(std::is_assignable_v<mayo::Option<mayo::i32>&, mayo::types::container::None>);
 
         static_assert(
             noexcept(mayo::Option<NoThrowMove>{std::declval<mayo::Option<NoThrowMove>&&>()}));
         static_assert(
             !noexcept(mayo::Option<ThrowMove>{std::declval<mayo::Option<ThrowMove>&&>()}));
+
+        static_assert(noexcept(std::declval<mayo::Option<NoThrowMove>&>()
+            = std::declval<mayo::Option<NoThrowMove>&&>()));
+        static_assert(!noexcept(
+            std::declval<mayo::Option<ThrowMove>&>() = std::declval<mayo::Option<ThrowMove>&&>()));
     }
 
     return 0;

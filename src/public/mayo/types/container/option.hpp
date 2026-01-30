@@ -1,5 +1,6 @@
 #pragma once
 
+#include "mayo/concepts/assign.hpp"
 #include "mayo/concepts/construct.hpp"
 #include "mayo/concepts/relation.hpp"
 #include "mayo/concepts/same.hpp"
@@ -17,6 +18,7 @@
 
 namespace mayo {
 namespace types::container {
+
     /**
      * 値なしを表すタグ
      */
@@ -97,12 +99,43 @@ namespace types::container {
             : storage{IN_PLACE, mayo::forward<U>(value)}
             , has_value{true} {}
 
-        constexpr Option& operator=(const Option& other) {
+        /**
+         * 値なしにする
+         */
+        constexpr auto operator=(None) noexcept -> Option& {
+            if (!has_value) {
+                return *this;
+            }
+
+            destroy();
+            return *this;
+        }
+
+        /**
+         * コピー代入する
+         */
+        constexpr auto operator=(const Option& other) -> Option& {
             return construct_from_other(other);
         }
 
-        constexpr Option& operator=(Option&& other) noexcept {
+        /**
+         * ムーブ代入する
+         */
+        constexpr auto operator=(Option&& other) noexcept(concepts::is_nothrow_move_assignable<T, T>
+            && concepts::is_nothrow_move_constructible<T>) -> Option& {
             return construct_from_other(mayo::move(other));
+        }
+
+        /**
+         * 値を変換代入する
+         *
+         * @tparam U 変換元の型
+         * @param value 代入する値
+         */
+        template <concepts::is_convertible<T> U>
+        constexpr auto operator=(U&& value) -> Option& {
+            emplace(mayo::forward<U>(value));
+            return *this;
         }
 
         /**
@@ -192,7 +225,7 @@ namespace types::container {
         /**
          * 値があれば破棄する
          */
-        constexpr auto destroy() -> void {
+        constexpr auto destroy() noexcept -> void {
             if (!has_value) {
                 return;
             }

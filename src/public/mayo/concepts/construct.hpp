@@ -3,6 +3,7 @@
 #include "mayo/type_traits/add_cvref.hpp"
 
 namespace mayo::concepts {
+
     /**
      * 指定引数で構築可能かを判定する
      */

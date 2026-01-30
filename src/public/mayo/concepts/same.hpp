@@ -1,6 +1,7 @@
 #pragma once
 
 namespace mayo::concepts {
+
     /**
      * 同一型かを判定する
      */
