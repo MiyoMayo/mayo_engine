@@ -100,6 +100,13 @@ namespace types::container {
             , has_value{true} {}
 
         /**
+         * 値を破棄する
+         */
+        constexpr ~Option() {
+            destroy();
+        }
+
+        /**
          * 値なしにする
          */
         constexpr auto operator=(None) noexcept -> Option& {
@@ -139,10 +146,18 @@ namespace types::container {
         }
 
         /**
-         * 値を破棄する
+         * 値参照の取得
          */
-        constexpr ~Option() {
-            destroy();
+        template <class Self>
+        constexpr auto operator*(this Self&& self) -> decltype(auto) {
+            return mayo::forward_like<Self>(self.unwrap());
+        }
+
+        /**
+         * 値の有無をboolとして取得
+         */
+        constexpr operator bool() const noexcept {
+            return has_value;
         }
 
         /**
@@ -168,21 +183,6 @@ namespace types::container {
         constexpr auto unwrap(this Self&& self) -> decltype(auto) {
             assert(self.has_value);
             return mayo::forward_like<Self>(self.storage.value);
-        }
-
-        /**
-         * 値参照の取得
-         */
-        template <class Self>
-        constexpr auto operator*(this Self&& self) -> decltype(auto) {
-            return mayo::forward_like<Self>(self.unwrap());
-        }
-
-        /**
-         * 値の有無をboolとして取得
-         */
-        constexpr operator bool() const noexcept {
-            return has_value;
         }
 
       private:
