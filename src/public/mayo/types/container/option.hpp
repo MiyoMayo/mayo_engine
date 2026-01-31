@@ -150,7 +150,12 @@ namespace types::container {
          */
         template <class Self>
         constexpr auto operator*(this Self&& self) -> decltype(auto) {
-            return mayo::forward_like<Self>(self.unwrap());
+            return mayo::forward_like<Self>(self.storage.value);
+        }
+
+        template <class Self>
+        constexpr auto operator->(this Self& self) noexcept -> auto {
+            return mayo::addressof(self.storage.value);
         }
 
         /**
@@ -281,6 +286,11 @@ constexpr auto check() -> bool {
 
     auto& o_o3 = OO1;
     assert(o_o3.is_some());
+
+    auto o = Option<std::string>{""};
+    auto s = o->begin();
+    const auto CO = Option{o};
+    auto cs = CO->begin();
 
     return true;
 }
