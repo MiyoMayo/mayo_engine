@@ -16,10 +16,16 @@ jobs:
     steps:
       - name: チェックアウト
         uses: actions/checkout@v4
-      - name: Ninjaを用意
-        run: brew install ninja
+      - name: NinjaとLLVMを用意
+        run: brew install ninja llvm
+      - name: Toolchainを設定
+        run: |
+          LLVM_PREFIX="$(brew --prefix llvm)"
+          echo "CMAKE_CXX_COMPILER=$LLVM_PREFIX/bin/clang++" >> $GITHUB_ENV
+          echo "CMAKE_AR=/usr/bin/ar" >> $GITHUB_ENV
+          echo "CMAKE_RANLIB=/usr/bin/ranlib" >> $GITHUB_ENV
       - name: Configure
-        run: cmake --preset dev
+        run: cmake --preset dev -D CMAKE_CXX_COMPILER="$CMAKE_CXX_COMPILER" -D CMAKE_AR="$CMAKE_AR" -D CMAKE_RANLIB="$CMAKE_RANLIB"
       - name: Build
         run: cmake --build --preset dev
   tests:
@@ -28,10 +34,16 @@ jobs:
     steps:
       - name: チェックアウト
         uses: actions/checkout@v4
-      - name: Ninjaを用意
-        run: brew install ninja
+      - name: NinjaとLLVMを用意
+        run: brew install ninja llvm
+      - name: Toolchainを設定
+        run: |
+          LLVM_PREFIX="$(brew --prefix llvm)"
+          echo "CMAKE_CXX_COMPILER=$LLVM_PREFIX/bin/clang++" >> $GITHUB_ENV
+          echo "CMAKE_AR=/usr/bin/ar" >> $GITHUB_ENV
+          echo "CMAKE_RANLIB=/usr/bin/ranlib" >> $GITHUB_ENV
       - name: Configure
-        run: cmake --preset dev
+        run: cmake --preset dev -D CMAKE_CXX_COMPILER="$CMAKE_CXX_COMPILER" -D CMAKE_AR="$CMAKE_AR" -D CMAKE_RANLIB="$CMAKE_RANLIB"
       - name: Build
         run: cmake --build --preset dev
       - name: CTest
@@ -46,7 +58,13 @@ jobs:
         run: brew install ninja llvm
       - name: clang-tidyをPATHに追加
         run: echo "$(brew --prefix llvm)/bin" >> $GITHUB_PATH
+      - name: Toolchainを設定
+        run: |
+          LLVM_PREFIX="$(brew --prefix llvm)"
+          echo "CMAKE_CXX_COMPILER=$LLVM_PREFIX/bin/clang++" >> $GITHUB_ENV
+          echo "CMAKE_AR=/usr/bin/ar" >> $GITHUB_ENV
+          echo "CMAKE_RANLIB=/usr/bin/ranlib" >> $GITHUB_ENV
       - name: Configure
-        run: cmake --preset tidy
+        run: cmake --preset tidy -D CMAKE_CXX_COMPILER="$CMAKE_CXX_COMPILER" -D CMAKE_AR="$CMAKE_AR" -D CMAKE_RANLIB="$CMAKE_RANLIB"
       - name: Build
         run: cmake --build --preset tidy
