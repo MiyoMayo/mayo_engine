@@ -14,8 +14,8 @@ template <class T, class U, class Category = std::partial_ordering>
 concept three_way_comparable_with = (std::three_way_comparable_with<T, U, Category>);
 
 // 等値比較可能判定
-template <class T, class U, class Result = bool>
+template <class T, class U, class R = bool>
 concept is_equality_comparable = requires(T x, U y) {
-    { x == y } -> concepts::is_convertible<Result>;
+    { x == y } -> concepts::is_convertible<R>;
 };
 } // namespace mayo::concepts

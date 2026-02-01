@@ -2,6 +2,7 @@
 #include "mayo/types/core/numeric.hpp"
 
 #include <cassert>
+#include <compare>
 #include <string>
 #include <type_traits>
 #include <utility>
@@ -76,26 +77,69 @@ auto main() -> mayo::i32 {
         mayo::Option<mayo::i32>& b{a};
         assert(*b == 42);
 
-        mayo::Option<mayo::i32> c{std::move(a)};
+        mayo::Option<mayo::i32> c = b;
         assert(c.is_some());
         assert(*c == 42);
 
-        mayo::Option<mayo::i32> d{mayo::NONE};
-        d = *b;
+        mayo::Option<mayo::i32> d = std::move(a);
         assert(d.is_some());
         assert(*d == 42);
 
-        mayo::Option<mayo::i32> e{mayo::NONE};
-        e = mayo::Option{std::move(b)};
+        mayo::Option<mayo::i32> e = mayo::NONE;
+        e = *b;
         assert(e.is_some());
         assert(*e == 42);
 
-        e = mayo::NONE;
-        assert(e.is_none());
+        mayo::Option<mayo::i32> f{mayo::NONE};
+        f = mayo::Option{std::move(b)};
+        assert(f.is_some());
+        assert(*f == 42);
 
-        e = 7;
-        assert(e.is_some());
-        assert(*e == 7);
+        f = mayo::NONE;
+        assert(f.is_none());
+
+        f = 7;
+        assert(f.is_some());
+        assert(*f == 7);
+    }
+
+    {
+        const mayo::Option<mayo::i32> NONE{};
+        const mayo::Option<mayo::i32> SOME{10};
+        const mayo::Option<mayo::i32> OTHER{10};
+        const mayo::Option<mayo::i32> DIFFERENT{20};
+        const mayo::Option<long> OTHER_TYPE{10};
+
+        assert(NONE == mayo::NONE);
+        assert(!(SOME == mayo::NONE));
+
+        assert(NONE == mayo::Option<mayo::i32>{});
+        assert(!(NONE == SOME));
+        assert(SOME == OTHER);
+        assert(!(SOME == DIFFERENT));
+
+        assert(SOME == 10);
+        assert(!(SOME == 5));
+        assert(10 == SOME);
+        assert(!(5 == SOME));
+        assert(!(NONE == 10));
+
+        assert(SOME == OTHER_TYPE);
+
+        auto cmp_none_some = NONE <=> SOME;
+        assert(std::is_lt(cmp_none_some));
+
+        auto cmp_some_none = 10 <=> NONE;
+        assert(std::is_gt(cmp_some_none));
+
+        auto cmp_some_val = SOME <=> 10;
+        assert(std::is_eq(cmp_some_val));
+
+        auto cmp_some_diff = SOME <=> DIFFERENT;
+        assert(std::is_lt(cmp_some_diff));
+
+        auto cmp_some_none_tag = SOME <=> mayo::NONE;
+        assert(std::is_gt(cmp_some_none_tag));
     }
 
     {
@@ -103,9 +147,9 @@ auto main() -> mayo::i32 {
         assert(text->size() == 5);
         assert(text->front() == 'h');
 
-        const mayo::Option<std::string> const_text{"world"};
-        assert(const_text->size() == 5);
-        assert(const_text->front() == 'w');
+        const mayo::Option<std::string> CONST_TEXT{"world"};
+        assert(CONST_TEXT->size() == 5);
+        assert(CONST_TEXT->front() == 'w');
     }
 
     {
@@ -116,6 +160,7 @@ auto main() -> mayo::i32 {
         static_assert(!std::is_assignable_v<mayo::Option<mayo::i32>&, std::string>);
         static_assert(std::is_assignable_v<mayo::Option<mayo::i32>&, mayo::types::core::None>);
         static_assert(std::is_convertible_v<mayo::Option<mayo::i32>, bool>);
+        static_assert(std::is_convertible_v<mayo::Option<mayo::i32>, mayo::Option<mayo::i32>>);
 
         static_assert(std::is_same_v<decltype(*std::declval<mayo::Option<mayo::i32>&>()),
             mayo::i32&>);
@@ -125,21 +170,22 @@ auto main() -> mayo::i32 {
             mayo::i32&&>);
         static_assert(std::is_same_v<decltype(*std::declval<const mayo::Option<mayo::i32>&&>()),
             const mayo::i32&&>);
-        static_assert(std::is_same_v<decltype(std::declval<mayo::Option<std::string>&>().operator->()),
+        static_assert(std::is_same_v<
+            decltype(std::declval<mayo::Option<std::string>&>().operator->()),
             std::string*>);
-        static_assert(
-            std::is_same_v<decltype(std::declval<const mayo::Option<std::string>&>().operator->()),
-                const std::string*>);
+        static_assert(std::is_same_v<
+            decltype(std::declval<const mayo::Option<std::string>&>().operator->()),
+            const std::string*>);
 
-        static_assert(
-            noexcept(mayo::Option<NoThrowMove>{std::declval<mayo::Option<NoThrowMove>&&>()}));
-        static_assert(
-            !noexcept(mayo::Option<ThrowMove>{std::declval<mayo::Option<ThrowMove>&&>()}));
+        static_assert(noexcept(mayo::Option<NoThrowMove>{
+            std::declval<mayo::Option<NoThrowMove>&&>()}));
+        static_assert(!noexcept(mayo::Option<ThrowMove>{
+            std::declval<mayo::Option<ThrowMove>&&>()}));
 
         static_assert(noexcept(std::declval<mayo::Option<NoThrowMove>&>()
             = std::declval<mayo::Option<NoThrowMove>&&>()));
-        static_assert(!noexcept(
-            std::declval<mayo::Option<ThrowMove>&>() = std::declval<mayo::Option<ThrowMove>&&>()));
+        static_assert(!noexcept(std::declval<mayo::Option<ThrowMove>&>()
+            = std::declval<mayo::Option<ThrowMove>&&>()));
     }
 
     return 0;

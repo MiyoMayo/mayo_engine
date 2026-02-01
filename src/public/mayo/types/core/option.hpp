@@ -5,11 +5,30 @@
 #include <cassert>
 #include <compare>
 #include <cstddef>
+#include <memory>
 #include <string>
 #include <type_traits>
 #include <utility>
 
 namespace mayo {
+namespace types::core {
+    template <class T>
+    class Option;
+}
+
+namespace concepts {
+    namespace detail {
+        template <class>
+        struct IsOptionType : std::false_type {};
+
+        template <class V>
+        struct IsOptionType<types::core::Option<V>> : std::true_type {};
+    } // namespace detail
+
+    template <class T>
+    concept is_option_type = (detail::IsOptionType<std::remove_cvref_t<T>>::value);
+} // namespace concepts
+
 namespace types::core {
 
     /**
@@ -71,7 +90,7 @@ namespace types::core {
         /**
          * コピー構築する
          */
-        explicit constexpr Option(const Option& other)
+        constexpr Option(const Option& other)
             : storage{}
             , has_value{false} {
             construct_from_other(other);
@@ -80,8 +99,7 @@ namespace types::core {
         /**
          * ムーブ構築する
          */
-        explicit constexpr Option(Option&& other)
-            noexcept(concepts::is_nothrow_move_constructible<T>)
+        constexpr Option(Option&& other) noexcept(concepts::is_nothrow_move_constructible<T>)
             : storage{}
             , has_value{false} {
             construct_from_other(std::move(other));
@@ -157,10 +175,11 @@ namespace types::core {
         /**
          * 値ポインタの取得
          *
-         * @note 値が無い場合は未定義
+         * @note 値が無い場合はassertで停止する
          */
         template <class Self>
         constexpr auto operator->(this Self& self) noexcept -> auto {
+            assert(self.has_value);
             return std::addressof(self.storage.value);
         }
 
@@ -249,44 +268,59 @@ namespace types::core {
             has_value = false;
         }
 
+        /**
+         * Option同士の等値比較
+         */
         template <class U>
         friend constexpr auto operator==(const Option& x, const Option<U>& y)
             noexcept(noexcept(*x == *y)) -> bool
             requires(concepts::is_equality_comparable<T, U>)
         {
-            if (!x.has_value && !y.has_value) {
+            if (x.is_none() && y.is_none()) {
                 return true;
-            } else if (!x.has_value || !y.has_value) {
+            } else if (x.is_none() || y.is_none()) {
                 return false;
             }
 
             return *x == *y;
         }
 
+        /**
+         * 値との等値比較（Optionと値）
+         */
         template <class U>
         friend constexpr auto operator==(const Option& x, const U& y) noexcept(noexcept(*x == y))
             -> bool
-            requires(concepts::is_equality_comparable<T, U>)
+            requires(!concepts::is_option_type<U> && concepts::is_equality_comparable<T, U>)
         {
-            if (!x.has_value) {
+            if (x.is_none()) {
                 return false;
             }
 
             return *x == y;
         }
 
+        /**
+         * 値との等値比較（値とOption）
+         */
         template <class U>
         friend constexpr auto operator==(const U& x, const Option& y) noexcept(noexcept(x == *y))
             -> bool
-            requires(concepts::is_equality_comparable<U, T>)
+            requires(!concepts::is_option_type<U> && concepts::is_equality_comparable<U, T>)
         {
             return y == x;
         }
 
+        /**
+         * Noneとの等値比較
+         */
         friend constexpr auto operator==(const Option& x, None) noexcept -> bool {
-            return !x.has_value;
+            return x.is_none();
         }
 
+        /**
+         * Option同士の三方比較
+         */
         template <class U>
         friend constexpr auto operator<=>(const Option& x, const Option<U>& y)
             noexcept(noexcept(*x <=> *y))
@@ -295,44 +329,53 @@ namespace types::core {
             using R = std::compare_three_way_result_t<T, U>;
             using C = std::common_comparison_category_t<R, std::strong_ordering>;
 
-            if (!x.has_value || !y.has_value) {
-                return static_cast<C>(x.has_value <=> y.has_value);
+            if (x.is_none() || y.is_none()) {
+                return static_cast<C>(x.is_some() <=> y.is_some());
             }
 
             return static_cast<C>(*x <=> *y);
         }
 
+        /**
+         * 値との三方比較（Optionと値）
+         */
         template <class U>
         friend constexpr auto operator<=>(const Option& x, const U& y) noexcept(noexcept(*x <=> y))
-            requires(concepts::three_way_comparable_with<T, U>)
+            requires(!concepts::is_option_type<U> && concepts::three_way_comparable_with<T, U>)
         {
             using R = std::compare_three_way_result_t<T, U>;
             using C = std::common_comparison_category_t<R, std::strong_ordering>;
 
-            if (!x.has_value) {
+            if (x.is_none()) {
                 return static_cast<C>(false <=> true);
             }
 
             return static_cast<C>(*x <=> y);
         }
 
+        /**
+         * 値との三方比較（値とOption）
+         */
         template <class U>
         friend constexpr auto operator<=>(const U& x, const Option<T>& y)
             noexcept(noexcept(x <=> *y))
-            requires(concepts::three_way_comparable_with<U, T>)
+            requires(!concepts::is_option_type<U> && concepts::three_way_comparable_with<U, T>)
         {
             using R = std::compare_three_way_result_t<U, T>;
             using C = std::common_comparison_category_t<R, std::strong_ordering>;
 
-            if (!y.has_value) {
+            if (y.is_none()) {
                 return static_cast<C>(true <=> false);
             }
 
             return static_cast<C>(x <=> *y);
         }
 
+        /**
+         * Noneとの三方比較
+         */
         friend constexpr auto operator<=>(const Option& x, None) noexcept -> std::strong_ordering {
-            return x.has_value <=> false;
+            return x.is_some() <=> false;
         }
 
       private:
