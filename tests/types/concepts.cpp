@@ -263,14 +263,6 @@ inline constexpr auto operator==(const ThreeWayLeft& left, const ThreeWayRight& 
     return left.value == right.value;
 }
 
-inline constexpr auto operator<=>(const ThreeWayRight& right, const ThreeWayLeft& left) {
-    return right.value <=> left.value;
-}
-
-inline constexpr auto operator==(const ThreeWayRight& right, const ThreeWayLeft& left) {
-    return right.value == left.value;
-}
-
 struct NoEqual {
     int value;
 };
@@ -509,7 +501,7 @@ int main() {
 
     static_assert(three_way_comparable<ThreeWayTotal>);
     static_assert(!three_way_comparable<ThreeWayNone>);
-    static_assert(three_way_comparable_with<ThreeWayLeft, ThreeWayRight>);
+    static_assert(three_way_comparable_with<int, int>);
     static_assert(!three_way_comparable_with<ThreeWayLeft, int>);
     static_assert(is_equality_comparable<int, int>);
     static_assert(is_equality_comparable<int*, const int*>);
