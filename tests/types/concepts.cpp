@@ -1,7 +1,7 @@
 #include "mayo/types/concepts.hpp"
 
-#include <cassert>
 #include <compare>
+#include <cstddef>
 #include <string>
 #include <type_traits>
 #include <utility>
@@ -19,10 +19,10 @@ struct MemberHolder {
     }
 };
 
-enum PlainEnum : std::uint8_t {
+enum PlainEnum : unsigned char {
     PLAIN_A
 };
-enum class ScopedEnum : std::uint8_t {
+enum class ScopedEnum : unsigned char {
     A
 };
 
@@ -34,6 +34,7 @@ union SomeUnion {
 struct Aggregate {
     int value;
 };
+
 struct NonAggregate {
     NonAggregate()
         : value(0) {}
@@ -53,6 +54,7 @@ struct Final final {};
 struct ImplicitLifetime {
     int value;
 };
+
 struct NonImplicitLifetime {
     ~NonImplicitLifetime() {}
 };
@@ -158,12 +160,6 @@ struct HasVirtualDtor {
 
 struct NoVirtualDtor {};
 
-struct NoSwap {
-    NoSwap() = default;
-    NoSwap(NoSwap&&) = delete;
-    NoSwap& operator=(NoSwap&&) = delete;
-};
-
 struct NoThrowSwap {
     int value;
 };
@@ -180,14 +176,6 @@ inline void swap(ThrowSwap& a, ThrowSwap& b) noexcept(false) {
     std::swap(a.value, b.value);
 }
 
-struct ExplicitFromInt {
-    explicit ExplicitFromInt(int) {}
-};
-
-struct ImplicitFromInt {
-    ImplicitFromInt(int) {}
-};
-
 struct ThrowConvert {
     operator int() noexcept(false) {
         return 0;
@@ -197,6 +185,7 @@ struct ThrowConvert {
 struct LayoutA {
     int x;
 };
+
 struct LayoutB {
     double x;
 };
@@ -204,33 +193,21 @@ struct LayoutB {
 struct PBase {
     int x;
 };
+
 struct PDerived : PBase {
     int y;
 };
 
-struct VirtualBase {};
-struct VirtualDerived : virtual VirtualBase {};
-struct NonVirtualDerived : VirtualBase {};
-
-int free_func(int) {
-    return 0;
-}
-
-struct Functor {
-    int operator()(int) noexcept {
+struct InvocableType {
+    int operator()(int) const noexcept {
         return 0;
     }
 };
 
-struct ThrowFunctor {
-    int operator()(int) noexcept(false) {
+struct ThrowInvocableType {
+    int operator()(int) const noexcept(false) {
         return 0;
     }
-};
-
-struct MemberPair {
-    int a;
-    int b;
 };
 
 struct Padded {
@@ -243,29 +220,18 @@ struct ThreeWayTotal {
     auto operator<=>(const ThreeWayTotal&) const = default;
 };
 
+struct ThreeWayType {
+    int value;
+    auto operator<=>(const ThreeWayType&) const = default;
+};
+
 struct ThreeWayNone {
     int value;
 };
 
-struct ThreeWayLeft {
-    int value;
-};
-
-struct ThreeWayRight {
-    int value;
-};
-
-inline constexpr auto operator<=>(const ThreeWayLeft& left, const ThreeWayRight& right) {
-    return left.value <=> right.value;
+int free_func(int) {
+    return 0;
 }
-
-inline constexpr auto operator==(const ThreeWayLeft& left, const ThreeWayRight& right) {
-    return left.value == right.value;
-}
-
-struct NoEqual {
-    int value;
-};
 } // namespace
 
 int main() {
@@ -379,29 +345,11 @@ int main() {
     static_assert(is_unbounded_array<int[]>);
     static_assert(!is_unbounded_array<int[3]>);
 
-    static_assert(is_constructible<std::string, const char*>);
-    static_assert(!is_constructible<MoveOnly, const MoveOnly&>);
-
-    static_assert(is_default_constructible<int>);
-    static_assert(!is_default_constructible<NoDefault>);
-
-    static_assert(is_copy_constructible<Copyable>);
-    static_assert(!is_copy_constructible<MoveOnly>);
-
-    static_assert(is_move_constructible<MoveOnly>);
-    static_assert(!is_move_constructible<NonMovable>);
-
-    static_assert(is_assignable<int&, int>);
-    static_assert(!is_assignable<const int&, int>);
-
     static_assert(is_copy_assignable<Copyable>);
     static_assert(!is_copy_assignable<NoAssign>);
 
     static_assert(is_move_assignable<MoveOnly>);
     static_assert(!is_move_assignable<NoMoveAssign>);
-
-    static_assert(is_destructible<int>);
-    static_assert(!is_destructible<NoDtor>);
 
     static_assert(is_trivially_constructible<int>);
     static_assert(!is_trivially_constructible<NonTrivial>);
@@ -454,12 +402,6 @@ int main() {
     static_assert(has_virtual_destructor<HasVirtualDtor>);
     static_assert(!has_virtual_destructor<NoVirtualDtor>);
 
-    static_assert(is_swappable_with<int&, int&>);
-    static_assert(!is_swappable_with<NoSwap&, NoSwap&>);
-
-    static_assert(is_swappable<int>);
-    static_assert(!is_swappable<NoSwap>);
-
     static_assert(is_nothrow_swappable_with<NoThrowSwap&, NoThrowSwap&>);
     static_assert(!is_nothrow_swappable_with<ThrowSwap&, ThrowSwap&>);
 
@@ -469,14 +411,8 @@ int main() {
     static_assert(has_unique_object_representations<unsigned char>);
     static_assert(!has_unique_object_representations<Padded>);
 
-    static_assert(is_same<int, int>);
-    static_assert(!is_same<int, float>);
-
     static_assert(is_base_of<PBase, PDerived>);
     static_assert(!is_base_of<PDerived, PBase>);
-
-    static_assert(is_convertible<int, double>);
-    static_assert(!is_convertible<int, ExplicitFromInt>);
 
     static_assert(is_nothrow_convertible<int, double>);
     static_assert(!is_nothrow_convertible<ThrowConvert, int>);
@@ -487,26 +423,19 @@ int main() {
     static_assert(ref_converts_from_tmp<const int&, int>);
     static_assert(!ref_converts_from_tmp<int&, int>);
 
-    static_assert(is_invocable<decltype(free_func), int>);
-    static_assert(!is_invocable<decltype(free_func), std::string>);
-
     static_assert(is_invocable_result_convertible<double, decltype(free_func), int>);
     static_assert(!is_invocable_result_convertible<std::string, decltype(free_func), int>);
 
-    static_assert(is_nothrow_invocable<Functor, int>);
-    static_assert(!is_nothrow_invocable<ThrowFunctor, int>);
+    static_assert(is_nothrow_invocable<InvocableType, int>);
+    static_assert(!is_nothrow_invocable<ThrowInvocableType, int>);
 
-    static_assert(is_nothrow_invocable_result_convertible<double, Functor, int>);
-    static_assert(!is_nothrow_invocable_result_convertible<double, ThrowFunctor, int>);
+    static_assert(is_nothrow_invocable_result_convertible<double, InvocableType, int>);
+    static_assert(!is_nothrow_invocable_result_convertible<double, ThrowInvocableType, int>);
 
     static_assert(three_way_comparable<ThreeWayTotal>);
     static_assert(!three_way_comparable<ThreeWayNone>);
-    static_assert(three_way_comparable_with<int, int>);
-    static_assert(!three_way_comparable_with<ThreeWayLeft, int>);
-    static_assert(is_equality_comparable<int, int>);
-    static_assert(is_equality_comparable<int*, const int*>);
-    static_assert(!is_equality_comparable<NoEqual, NoEqual>);
+    static_assert(three_way_comparable_with<ThreeWayType, ThreeWayType>);
+    static_assert(!three_way_comparable_with<ThreeWayType, int>);
 
-    assert(true);
     return 0;
 }

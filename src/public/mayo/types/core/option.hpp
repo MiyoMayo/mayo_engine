@@ -111,7 +111,7 @@ namespace types::core {
          * @tparam U 変換元の型
          * @param value 格納する値
          */
-        template <concepts::is_convertible<T> U>
+        template <concepts::convertible_to<T> U>
         explicit constexpr Option(U&& value)
             : storage{std::in_place, std::forward<U>(value)}
             , has_value{true} {}
@@ -155,7 +155,7 @@ namespace types::core {
          * @tparam U 変換元の型
          * @param value 代入する値
          */
-        template <concepts::is_convertible<T> U>
+        template <concepts::convertible_to<T> U>
         constexpr auto operator=(U&& value) -> Option& {
             emplace(std::forward<U>(value));
             return *this;
@@ -245,7 +245,7 @@ namespace types::core {
          */
         template <class Other>
         constexpr auto construct_from_other(Other&& other) -> Option&
-            requires(concepts::is_same<Option, std::remove_cvref_t<Other>>)
+            requires(concepts::same_as<Option, std::remove_cvref_t<Other>>)
         {
             if (std::addressof(*this) == std::addressof(other)) {
                 return *this;
@@ -283,7 +283,7 @@ namespace types::core {
          */
         template <class U>
         friend constexpr auto operator==(const Option& x, const Option<U>& y) noexcept(noexcept(*x == *y)) -> bool
-            requires(concepts::is_equality_comparable<T, U>)
+            requires(concepts::equality_comparable_with<T, U>)
         {
             if (x.is_none() && y.is_none()) {
                 return true;
@@ -299,7 +299,7 @@ namespace types::core {
          */
         template <class U>
         friend constexpr auto operator==(const Option& x, const U& y) noexcept(noexcept(*x == y)) -> bool
-            requires(!concepts::is_option_type<U> && concepts::is_equality_comparable<T, U>)
+            requires(!concepts::is_option_type<U> && concepts::equality_comparable_with<T, U>)
         {
             if (x.is_none()) {
                 return false;
@@ -313,7 +313,7 @@ namespace types::core {
          */
         template <class U>
         friend constexpr auto operator==(const U& x, const Option& y) noexcept(noexcept(x == *y)) -> bool
-            requires(!concepts::is_option_type<U> && concepts::is_equality_comparable<U, T>)
+            requires(!concepts::is_option_type<U> && concepts::equality_comparable_with<U, T>)
         {
             return y == x;
         }
