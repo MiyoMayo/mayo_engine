@@ -36,6 +36,7 @@ NamespaceIndentation: Inner
 FixNamespaceComments: true
 InsertBraces: true
 BreakBinaryOperations: OnePerLine
-AllowBreakBeforeNoexceptSpecifier: OnlyWithParen
+AllowBreakBeforeNoexceptSpecifier: Always
 AllowAllArgumentsOnNextLine: false
 PenaltyBreakBeforeFirstCallParameter: 1000
+PenaltyBreakOpenParenthesis: 2000

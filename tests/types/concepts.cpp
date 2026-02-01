@@ -1,6 +1,7 @@
 #include "mayo/types/concepts.hpp"
 
 #include <cassert>
+#include <compare>
 #include <string>
 #include <type_traits>
 #include <utility>
@@ -13,11 +14,17 @@ struct NonEmpty {
 
 struct MemberHolder {
     int value;
-    int method() const { return value; }
+    int method() const {
+        return value;
+    }
 };
 
-enum PlainEnum : std::uint8_t { PLAIN_A };
-enum class ScopedEnum : std::uint8_t { A };
+enum PlainEnum : std::uint8_t {
+    PLAIN_A
+};
+enum class ScopedEnum : std::uint8_t {
+    A
+};
 
 union SomeUnion {
     int a;
@@ -28,7 +35,8 @@ struct Aggregate {
     int value;
 };
 struct NonAggregate {
-    NonAggregate() : value(0) {}
+    NonAggregate()
+        : value(0) {}
     int value;
 };
 
@@ -96,11 +104,15 @@ struct NonTrivialMove {
 };
 
 struct NonTrivialCopyAssign {
-    NonTrivialCopyAssign& operator=(const NonTrivialCopyAssign&) { return *this; }
+    NonTrivialCopyAssign& operator=(const NonTrivialCopyAssign&) {
+        return *this;
+    }
 };
 
 struct NonTrivialMoveAssign {
-    NonTrivialMoveAssign& operator=(NonTrivialMoveAssign&&) noexcept { return *this; }
+    NonTrivialMoveAssign& operator=(NonTrivialMoveAssign&&) noexcept {
+        return *this;
+    }
 };
 
 struct NonTrivialDtor {
@@ -119,7 +131,9 @@ struct ThrowCopy {
 struct ThrowMove {
     ThrowMove() = default;
     ThrowMove(ThrowMove&&) noexcept(false) {}
-    ThrowMove& operator=(ThrowMove&&) noexcept(false) { return *this; }
+    ThrowMove& operator=(ThrowMove&&) noexcept(false) {
+        return *this;
+    }
 };
 
 struct NoThrowMove {
@@ -129,7 +143,9 @@ struct NoThrowMove {
 };
 
 struct ThrowCopyAssign {
-    ThrowCopyAssign& operator=(const ThrowCopyAssign&) noexcept(false) { return *this; }
+    ThrowCopyAssign& operator=(const ThrowCopyAssign&) noexcept(false) {
+        return *this;
+    }
 };
 
 struct ThrowDtor {
@@ -173,7 +189,9 @@ struct ImplicitFromInt {
 };
 
 struct ThrowConvert {
-    operator int() noexcept(false) { return 0; }
+    operator int() noexcept(false) {
+        return 0;
+    }
 };
 
 struct LayoutA {
@@ -199,11 +217,15 @@ int free_func(int) {
 }
 
 struct Functor {
-    int operator()(int) noexcept { return 0; }
+    int operator()(int) noexcept {
+        return 0;
+    }
 };
 
 struct ThrowFunctor {
-    int operator()(int) noexcept(false) { return 0; }
+    int operator()(int) noexcept(false) {
+        return 0;
+    }
 };
 
 struct MemberPair {
@@ -214,6 +236,43 @@ struct MemberPair {
 struct Padded {
     char c;
     int i;
+};
+
+struct ThreeWayTotal {
+    int value;
+    auto operator<=>(const ThreeWayTotal&) const = default;
+};
+
+struct ThreeWayNone {
+    int value;
+};
+
+struct ThreeWayLeft {
+    int value;
+};
+
+struct ThreeWayRight {
+    int value;
+};
+
+inline constexpr auto operator<=>(const ThreeWayLeft& left, const ThreeWayRight& right) {
+    return left.value <=> right.value;
+}
+
+inline constexpr auto operator==(const ThreeWayLeft& left, const ThreeWayRight& right) {
+    return left.value == right.value;
+}
+
+inline constexpr auto operator<=>(const ThreeWayRight& right, const ThreeWayLeft& left) {
+    return right.value <=> left.value;
+}
+
+inline constexpr auto operator==(const ThreeWayRight& right, const ThreeWayLeft& left) {
+    return right.value == left.value;
+}
+
+struct NoEqual {
+    int value;
 };
 } // namespace
 
@@ -447,6 +506,14 @@ int main() {
 
     static_assert(is_nothrow_invocable_result_convertible<double, Functor, int>);
     static_assert(!is_nothrow_invocable_result_convertible<double, ThrowFunctor, int>);
+
+    static_assert(three_way_comparable<ThreeWayTotal>);
+    static_assert(!three_way_comparable<ThreeWayNone>);
+    static_assert(three_way_comparable_with<ThreeWayLeft, ThreeWayRight>);
+    static_assert(!three_way_comparable_with<ThreeWayLeft, int>);
+    static_assert(is_equality_comparable<int, int>);
+    static_assert(is_equality_comparable<int*, const int*>);
+    static_assert(!is_equality_comparable<NoEqual, NoEqual>);
 
     assert(true);
     return 0;

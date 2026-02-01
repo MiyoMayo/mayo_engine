@@ -3,6 +3,7 @@
 #include "mayo/types/concepts.hpp"
 #include "mayo/types/core/numeric.hpp"
 #include <cassert>
+#include <compare>
 #include <cstddef>
 #include <string>
 #include <type_traits>
@@ -246,6 +247,92 @@ namespace types::core {
 
             std::construct_at(std::addressof(storage.dummy), std::byte{});
             has_value = false;
+        }
+
+        template <class U>
+        friend constexpr auto operator==(const Option& x, const Option<U>& y)
+            noexcept(noexcept(*x == *y)) -> bool
+            requires(concepts::is_equality_comparable<T, U>)
+        {
+            if (!x.has_value && !y.has_value) {
+                return true;
+            } else if (!x.has_value || !y.has_value) {
+                return false;
+            }
+
+            return *x == *y;
+        }
+
+        template <class U>
+        friend constexpr auto operator==(const Option& x, const U& y) noexcept(noexcept(*x == y))
+            -> bool
+            requires(concepts::is_equality_comparable<T, U>)
+        {
+            if (!x.has_value) {
+                return false;
+            }
+
+            return *x == y;
+        }
+
+        template <class U>
+        friend constexpr auto operator==(const U& x, const Option& y) noexcept(noexcept(x == *y))
+            -> bool
+            requires(concepts::is_equality_comparable<U, T>)
+        {
+            return y == x;
+        }
+
+        friend constexpr auto operator==(const Option& x, None) noexcept -> bool {
+            return !x.has_value;
+        }
+
+        template <class U>
+        friend constexpr auto operator<=>(const Option& x, const Option<U>& y)
+            noexcept(noexcept(*x <=> *y))
+            requires(concepts::three_way_comparable_with<T, U>)
+        {
+            using R = std::compare_three_way_result_t<T, U>;
+            using C = std::common_comparison_category_t<R, std::strong_ordering>;
+
+            if (!x.has_value || !y.has_value) {
+                return static_cast<C>(x.has_value <=> y.has_value);
+            }
+
+            return static_cast<C>(*x <=> *y);
+        }
+
+        template <class U>
+        friend constexpr auto operator<=>(const Option& x, const U& y) noexcept(noexcept(*x <=> y))
+            requires(concepts::three_way_comparable_with<T, U>)
+        {
+            using R = std::compare_three_way_result_t<T, U>;
+            using C = std::common_comparison_category_t<R, std::strong_ordering>;
+
+            if (!x.has_value) {
+                return static_cast<C>(false <=> true);
+            }
+
+            return static_cast<C>(*x <=> y);
+        }
+
+        template <class U>
+        friend constexpr auto operator<=>(const U& x, const Option<T>& y)
+            noexcept(noexcept(x <=> *y))
+            requires(concepts::three_way_comparable_with<U, T>)
+        {
+            using R = std::compare_three_way_result_t<U, T>;
+            using C = std::common_comparison_category_t<R, std::strong_ordering>;
+
+            if (!y.has_value) {
+                return static_cast<C>(true <=> false);
+            }
+
+            return static_cast<C>(x <=> *y);
+        }
+
+        friend constexpr auto operator<=>(const Option& x, None) noexcept -> std::strong_ordering {
+            return x.has_value <=> false;
         }
 
       private:
