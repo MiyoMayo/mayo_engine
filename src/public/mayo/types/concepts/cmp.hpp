@@ -1,6 +1,5 @@
 #pragma once
 
-#include "mayo/types/concepts/type_traits.hpp"
 #include <compare>
 
 namespace mayo::concepts {
@@ -13,9 +12,4 @@ concept three_way_comparable = (std::three_way_comparable<T, Category>);
 template <class T, class U, class Category = std::partial_ordering>
 concept three_way_comparable_with = (std::three_way_comparable_with<T, U, Category>);
 
-// 等値比較可能判定
-template <class T, class U, class R = bool>
-concept is_equality_comparable = requires(T x, U y) {
-    { x == y } -> concepts::is_convertible<R>;
-};
 } // namespace mayo::concepts
