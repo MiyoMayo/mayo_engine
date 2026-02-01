@@ -3,7 +3,7 @@ BasedOnStyle: LLVM
 IndentWidth: 4
 TabWidth: 4
 UseTab: Never
-ColumnLimit: 100
+ColumnLimit: 160
 DerivePointerAlignment: false
 PointerAlignment: Left
 AllowShortBlocksOnASingleLine: Never
@@ -40,3 +40,4 @@ AllowBreakBeforeNoexceptSpecifier: Always
 AllowAllArgumentsOnNextLine: false
 PenaltyBreakBeforeFirstCallParameter: 1000
 PenaltyBreakOpenParenthesis: 2000
+BreakBeforeTernaryOperators: true

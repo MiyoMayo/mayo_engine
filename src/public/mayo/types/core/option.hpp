@@ -145,8 +145,7 @@ namespace types::core {
         /**
          * ムーブ代入する
          */
-        constexpr auto operator=(Option&& other) noexcept(concepts::is_nothrow_move_assignable<T>
-            && concepts::is_nothrow_move_constructible<T>) -> Option& {
+        constexpr auto operator=(Option&& other) noexcept(concepts::is_nothrow_move_assignable<T> && concepts::is_nothrow_move_constructible<T>) -> Option& {
             return construct_from_other(std::move(other));
         }
 
@@ -190,6 +189,18 @@ namespace types::core {
             return has_value;
         }
 
+        template <class Self>
+        constexpr auto begin(this Self& self) noexcept {
+            using Ptr = std::add_pointer_t<std::remove_reference_t<decltype(self.storage.value)>>;
+            return self.has_value ? std::addressof(self.storage.value) : static_cast<Ptr>(nullptr);
+        }
+
+        template <class Self>
+        constexpr auto end(this Self& self) noexcept {
+            auto begin = self.begin();
+            return self.has_value ? begin + 1 : begin;
+        }
+
         /**
          * 値が存在するか
          */
@@ -223,8 +234,7 @@ namespace types::core {
         constexpr auto emplace(Args&&... args) -> T& {
             destroy();
 
-            auto* ptr
-                = std::construct_at(std::addressof(storage.value), std::forward<Args>(args)...);
+            auto* ptr = std::construct_at(std::addressof(storage.value), std::forward<Args>(args)...);
             has_value = true;
 
             return *ptr;
@@ -272,8 +282,7 @@ namespace types::core {
          * Option同士の等値比較
          */
         template <class U>
-        friend constexpr auto operator==(const Option& x, const Option<U>& y)
-            noexcept(noexcept(*x == *y)) -> bool
+        friend constexpr auto operator==(const Option& x, const Option<U>& y) noexcept(noexcept(*x == *y)) -> bool
             requires(concepts::is_equality_comparable<T, U>)
         {
             if (x.is_none() && y.is_none()) {
@@ -289,8 +298,7 @@ namespace types::core {
          * 値との等値比較（Optionと値）
          */
         template <class U>
-        friend constexpr auto operator==(const Option& x, const U& y) noexcept(noexcept(*x == y))
-            -> bool
+        friend constexpr auto operator==(const Option& x, const U& y) noexcept(noexcept(*x == y)) -> bool
             requires(!concepts::is_option_type<U> && concepts::is_equality_comparable<T, U>)
         {
             if (x.is_none()) {
@@ -304,8 +312,7 @@ namespace types::core {
          * 値との等値比較（値とOption）
          */
         template <class U>
-        friend constexpr auto operator==(const U& x, const Option& y) noexcept(noexcept(x == *y))
-            -> bool
+        friend constexpr auto operator==(const U& x, const Option& y) noexcept(noexcept(x == *y)) -> bool
             requires(!concepts::is_option_type<U> && concepts::is_equality_comparable<U, T>)
         {
             return y == x;
@@ -322,8 +329,7 @@ namespace types::core {
          * Option同士の三方比較
          */
         template <class U>
-        friend constexpr auto operator<=>(const Option& x, const Option<U>& y)
-            noexcept(noexcept(*x <=> *y))
+        friend constexpr auto operator<=>(const Option& x, const Option<U>& y) noexcept(noexcept(*x <=> *y))
             requires(concepts::three_way_comparable_with<T, U>)
         {
             using R = std::compare_three_way_result_t<T, U>;
@@ -357,8 +363,7 @@ namespace types::core {
          * 値との三方比較（値とOption）
          */
         template <class U>
-        friend constexpr auto operator<=>(const U& x, const Option<T>& y)
-            noexcept(noexcept(x <=> *y))
+        friend constexpr auto operator<=>(const U& x, const Option<T>& y) noexcept(noexcept(x <=> *y))
             requires(!concepts::is_option_type<U> && concepts::three_way_comparable_with<U, T>)
         {
             using R = std::compare_three_way_result_t<U, T>;
