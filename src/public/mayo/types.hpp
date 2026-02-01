@@ -1,3 +1,5 @@
 #pragma once
 
+// IWYU pragma: begin_exports
 #include "mayo/types/core.hpp"
+// IWYU pragma: end_exports
