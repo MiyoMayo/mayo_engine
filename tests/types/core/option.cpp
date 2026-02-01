@@ -1,6 +1,5 @@
-#include <mayo/types/container/option.hpp>
-#include <mayo/types/core/basic_types.hpp>
-#include <mayo/utility/transfer.hpp>
+#include "mayo/types/core/option.hpp"
+#include "mayo/types/core/numeric.hpp"
 
 #include <cassert>
 #include <string>
@@ -61,7 +60,7 @@ auto main() -> mayo::i32 {
     Counted::destroyed = 0;
     {
         Counted local{7};
-        mayo::Option<Counted> value{mayo::move(local)};
+        mayo::Option<Counted> value{std::move(local)};
         assert(value);
         assert(value.unwrap().value == 7);
         assert(value.unwrap().value != 0);
@@ -74,7 +73,7 @@ auto main() -> mayo::i32 {
         mayo::Option<mayo::i32>& b{a};
         assert(*b == 42);
 
-        mayo::Option<mayo::i32> c{mayo::move(a)};
+        mayo::Option<mayo::i32> c{std::move(a)};
         assert(c.is_some());
         assert(*c == 42);
 
@@ -84,7 +83,7 @@ auto main() -> mayo::i32 {
         assert(*d == 42);
 
         mayo::Option<mayo::i32> e{mayo::NONE};
-        e = mayo::move(b);
+        e = mayo::Option{std::move(b)};
         assert(e.is_some());
         assert(*e == 42);
 
@@ -102,7 +101,7 @@ auto main() -> mayo::i32 {
         static_assert(!std::is_constructible_v<mayo::Option<mayo::i32>, std::string>);
         static_assert(std::is_assignable_v<mayo::Option<std::string>&, const char*>);
         static_assert(!std::is_assignable_v<mayo::Option<mayo::i32>&, std::string>);
-        static_assert(std::is_assignable_v<mayo::Option<mayo::i32>&, mayo::types::container::None>);
+        static_assert(std::is_assignable_v<mayo::Option<mayo::i32>&, mayo::types::core::None>);
 
         static_assert(
             noexcept(mayo::Option<NoThrowMove>{std::declval<mayo::Option<NoThrowMove>&&>()}));

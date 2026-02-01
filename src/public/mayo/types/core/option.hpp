@@ -1,23 +1,15 @@
 #pragma once
 
-#include "mayo/concepts/assign.hpp"
-#include "mayo/concepts/construct.hpp"
-#include "mayo/concepts/relation.hpp"
-#include "mayo/concepts/same.hpp"
-#include "mayo/memory/address.hpp"
-#include "mayo/memory/construct.hpp"
-#include "mayo/memory/destroy.hpp"
-#include "mayo/type_traits/remove_cvref.hpp"
-#include "mayo/types/core/basic_types.hpp"
-#include "mayo/types/core/byte.hpp"
-#include "mayo/utility/place_tag.hpp"
-#include "mayo/utility/transfer.hpp"
+#include "mayo/types/concepts.hpp"
+#include "mayo/types/core/numeric.hpp"
 #include <cassert>
 #include <cstddef>
 #include <string>
+#include <type_traits>
+#include <utility>
 
 namespace mayo {
-namespace types::container {
+namespace types::core {
 
     /**
      * 値なしを表すタグ
@@ -43,12 +35,12 @@ namespace types::container {
          * 値の生存領域
          */
         union Storage {
-            constexpr Storage(Valueless) noexcept
+            constexpr Storage() noexcept
                 : dummy{} {}
 
             template <class... Args>
-            constexpr Storage(InPlace, Args&&... args)
-                : value{mayo::forward<Args>(args)...} {}
+            constexpr Storage(std::in_place_t, Args&&... args)
+                : value{std::forward<Args>(args)...} {}
 
             constexpr Storage(const Storage&) = delete;
             constexpr Storage(Storage&&) = delete;
@@ -57,7 +49,7 @@ namespace types::container {
             constexpr ~Storage() {}
 
             T value;
-            Byte dummy;
+            std::byte dummy;
         };
 
       public:
@@ -65,27 +57,27 @@ namespace types::container {
          * 値なしで構築する
          */
         explicit constexpr Option() noexcept
-            : storage{VALUELESS}
+            : storage{}
             , has_value{false} {}
 
         /**
          * 値なしを明示して構築する
          */
         constexpr Option(None) noexcept
-            : storage{VALUELESS}
+            : storage{}
             , has_value{false} {}
 
         explicit constexpr Option(const Option& other)
-            : storage{VALUELESS}
+            : storage{}
             , has_value{false} {
             construct_from_other(other);
         }
 
         explicit constexpr Option(Option&& other)
             noexcept(concepts::is_nothrow_move_constructible<T>)
-            : storage{VALUELESS}
+            : storage{}
             , has_value{false} {
-            construct_from_other(mayo::move(other));
+            construct_from_other(std::move(other));
         }
 
         /**
@@ -96,7 +88,7 @@ namespace types::container {
          */
         template <concepts::is_convertible<T> U>
         explicit constexpr Option(U&& value)
-            : storage{IN_PLACE, mayo::forward<U>(value)}
+            : storage{std::in_place, std::forward<U>(value)}
             , has_value{true} {}
 
         /**
@@ -128,9 +120,9 @@ namespace types::container {
         /**
          * ムーブ代入する
          */
-        constexpr auto operator=(Option&& other) noexcept(concepts::is_nothrow_move_assignable<T, T>
+        constexpr auto operator=(Option&& other) noexcept(concepts::is_nothrow_move_assignable<T>
             && concepts::is_nothrow_move_constructible<T>) -> Option& {
-            return construct_from_other(mayo::move(other));
+            return construct_from_other(std::move(other));
         }
 
         /**
@@ -141,7 +133,7 @@ namespace types::container {
          */
         template <concepts::is_convertible<T> U>
         constexpr auto operator=(U&& value) -> Option& {
-            emplace(mayo::forward<U>(value));
+            emplace(std::forward<U>(value));
             return *this;
         }
 
@@ -150,12 +142,12 @@ namespace types::container {
          */
         template <class Self>
         constexpr auto operator*(this Self&& self) -> decltype(auto) {
-            return mayo::forward_like<Self>(self.storage.value);
+            return std::forward_like<Self>(self.storage.value);
         }
 
         template <class Self>
         constexpr auto operator->(this Self& self) noexcept -> auto {
-            return mayo::addressof(self.storage.value);
+            return std::addressof(self.storage.value);
         }
 
         /**
@@ -187,7 +179,7 @@ namespace types::container {
         template <class Self>
         constexpr auto unwrap(this Self&& self) -> decltype(auto) {
             assert(self.has_value);
-            return mayo::forward_like<Self>(self.storage.value);
+            return std::forward_like<Self>(self.storage.value);
         }
 
       private:
@@ -199,7 +191,7 @@ namespace types::container {
             destroy();
 
             auto* ptr
-                = mayo::construct_at(mayo::addressof(storage.value), mayo::forward<Args>(args)...);
+                = std::construct_at(std::addressof(storage.value), std::forward<Args>(args)...);
             has_value = true;
 
             return *ptr;
@@ -210,18 +202,18 @@ namespace types::container {
          */
         template <class Other>
         constexpr auto construct_from_other(Other&& other) -> Option&
-            requires(concepts::is_same<Option, mayo::remove_cvref<Other>>)
+            requires(concepts::is_same<Option, std::remove_cvref_t<Other>>)
         {
-            if (mayo::addressof(*this) == mayo::addressof(other)) {
+            if (std::addressof(*this) == std::addressof(other)) {
                 return *this;
             }
 
             if (has_value && other.has_value) {
-                storage.value = mayo::forward_like<Other>(other.storage.value);
+                storage.value = std::forward_like<Other>(other.storage.value);
             } else if (has_value && !other.has_value) {
                 destroy();
             } else if (!has_value && other.has_value) {
-                emplace(mayo::forward_like<Other>(other.storage.value));
+                emplace(std::forward_like<Other>(other.storage.value));
             }
 
             return *this;
@@ -235,9 +227,11 @@ namespace types::container {
                 return;
             }
 
-            mayo::destroy_at(mayo::addressof(storage.value));
+            if (!concepts::is_trivially_destructible<T>) {
+                std::destroy_at(std::addressof(storage.value));
+            }
 
-            mayo::construct_at(mayo::addressof(storage.dummy), Byte{});
+            std::construct_at(std::addressof(storage.dummy), std::byte{});
             has_value = false;
         }
 
@@ -245,10 +239,10 @@ namespace types::container {
         Storage storage;
         bool has_value;
     };
-} // namespace types::container
+} // namespace types::core
 
-using types::container::NONE;
-using types::container::Option;
+using types::core::NONE;
+using types::core::Option;
 
 /**
  * Optionの簡易チェック
@@ -268,7 +262,7 @@ constexpr auto check() -> bool {
 
     auto o4 = Option{o3};
     assert(o3);
-    auto o5 = Option{move(o3)};
+    auto o5 = Option{std::move(o3)};
     assert(o4);
 
     auto o6 = Option<std::string>{""};
