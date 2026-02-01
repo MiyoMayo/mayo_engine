@@ -55,6 +55,9 @@ auto main() -> mayo::i32 {
         assert(*some == 1);
         assert(some.unwrap() == 1);
         assert(static_cast<bool>(some));
+
+        *some = 5;
+        assert(*some == 5);
     }
 
     Counted::destroyed = 0;
@@ -96,12 +99,37 @@ auto main() -> mayo::i32 {
     }
 
     {
+        mayo::Option<std::string> text{"hello"};
+        assert(text->size() == 5);
+        assert(text->front() == 'h');
+
+        const mayo::Option<std::string> const_text{"world"};
+        assert(const_text->size() == 5);
+        assert(const_text->front() == 'w');
+    }
+
+    {
         static_assert(std::is_constructible_v<mayo::Option<std::string>, const char*>);
         static_assert(!std::is_convertible_v<const char*, mayo::Option<std::string>>);
         static_assert(!std::is_constructible_v<mayo::Option<mayo::i32>, std::string>);
         static_assert(std::is_assignable_v<mayo::Option<std::string>&, const char*>);
         static_assert(!std::is_assignable_v<mayo::Option<mayo::i32>&, std::string>);
         static_assert(std::is_assignable_v<mayo::Option<mayo::i32>&, mayo::types::core::None>);
+        static_assert(std::is_convertible_v<mayo::Option<mayo::i32>, bool>);
+
+        static_assert(std::is_same_v<decltype(*std::declval<mayo::Option<mayo::i32>&>()),
+            mayo::i32&>);
+        static_assert(std::is_same_v<decltype(*std::declval<const mayo::Option<mayo::i32>&>()),
+            const mayo::i32&>);
+        static_assert(std::is_same_v<decltype(*std::declval<mayo::Option<mayo::i32>&&>()),
+            mayo::i32&&>);
+        static_assert(std::is_same_v<decltype(*std::declval<const mayo::Option<mayo::i32>&&>()),
+            const mayo::i32&&>);
+        static_assert(std::is_same_v<decltype(std::declval<mayo::Option<std::string>&>().operator->()),
+            std::string*>);
+        static_assert(
+            std::is_same_v<decltype(std::declval<const mayo::Option<std::string>&>().operator->()),
+                const std::string*>);
 
         static_assert(
             noexcept(mayo::Option<NoThrowMove>{std::declval<mayo::Option<NoThrowMove>&&>()}));

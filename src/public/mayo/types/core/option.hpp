@@ -67,12 +67,18 @@ namespace types::core {
             : storage{}
             , has_value{false} {}
 
+        /**
+         * コピー構築する
+         */
         explicit constexpr Option(const Option& other)
             : storage{}
             , has_value{false} {
             construct_from_other(other);
         }
 
+        /**
+         * ムーブ構築する
+         */
         explicit constexpr Option(Option&& other)
             noexcept(concepts::is_nothrow_move_constructible<T>)
             : storage{}
@@ -139,12 +145,19 @@ namespace types::core {
 
         /**
          * 値参照の取得
+         *
+         * @note 値が無い場合は未定義
          */
         template <class Self>
         constexpr auto operator*(this Self&& self) -> decltype(auto) {
             return std::forward_like<Self>(self.storage.value);
         }
 
+        /**
+         * 値ポインタの取得
+         *
+         * @note 値が無い場合は未定義
+         */
         template <class Self>
         constexpr auto operator->(this Self& self) noexcept -> auto {
             return std::addressof(self.storage.value);
