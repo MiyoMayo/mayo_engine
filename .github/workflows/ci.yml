@@ -21,11 +21,13 @@ jobs:
       - name: Toolchainを設定
         run: |
           LLVM_PREFIX="$(brew --prefix llvm)"
+          SDKROOT="$(xcrun --sdk macosx --show-sdk-path)"
           echo "CMAKE_CXX_COMPILER=$LLVM_PREFIX/bin/clang++" >> $GITHUB_ENV
           echo "CMAKE_AR=/usr/bin/ar" >> $GITHUB_ENV
           echo "CMAKE_RANLIB=/usr/bin/ranlib" >> $GITHUB_ENV
+          echo "SDKROOT=$SDKROOT" >> $GITHUB_ENV
       - name: Configure
-        run: cmake --preset dev -D CMAKE_CXX_COMPILER="$CMAKE_CXX_COMPILER" -D CMAKE_AR="$CMAKE_AR" -D CMAKE_RANLIB="$CMAKE_RANLIB"
+        run: cmake --preset dev -D CMAKE_CXX_COMPILER="$CMAKE_CXX_COMPILER" -D CMAKE_AR="$CMAKE_AR" -D CMAKE_RANLIB="$CMAKE_RANLIB" -D CMAKE_OSX_SYSROOT="$SDKROOT"
       - name: Build
         run: cmake --build --preset dev
   tests:
@@ -39,11 +41,13 @@ jobs:
       - name: Toolchainを設定
         run: |
           LLVM_PREFIX="$(brew --prefix llvm)"
+          SDKROOT="$(xcrun --sdk macosx --show-sdk-path)"
           echo "CMAKE_CXX_COMPILER=$LLVM_PREFIX/bin/clang++" >> $GITHUB_ENV
           echo "CMAKE_AR=/usr/bin/ar" >> $GITHUB_ENV
           echo "CMAKE_RANLIB=/usr/bin/ranlib" >> $GITHUB_ENV
+          echo "SDKROOT=$SDKROOT" >> $GITHUB_ENV
       - name: Configure
-        run: cmake --preset dev -D CMAKE_CXX_COMPILER="$CMAKE_CXX_COMPILER" -D CMAKE_AR="$CMAKE_AR" -D CMAKE_RANLIB="$CMAKE_RANLIB"
+        run: cmake --preset dev -D CMAKE_CXX_COMPILER="$CMAKE_CXX_COMPILER" -D CMAKE_AR="$CMAKE_AR" -D CMAKE_RANLIB="$CMAKE_RANLIB" -D CMAKE_OSX_SYSROOT="$SDKROOT"
       - name: Build
         run: cmake --build --preset dev
       - name: CTest
@@ -61,10 +65,12 @@ jobs:
       - name: Toolchainを設定
         run: |
           LLVM_PREFIX="$(brew --prefix llvm)"
+          SDKROOT="$(xcrun --sdk macosx --show-sdk-path)"
           echo "CMAKE_CXX_COMPILER=$LLVM_PREFIX/bin/clang++" >> $GITHUB_ENV
           echo "CMAKE_AR=/usr/bin/ar" >> $GITHUB_ENV
           echo "CMAKE_RANLIB=/usr/bin/ranlib" >> $GITHUB_ENV
+          echo "SDKROOT=$SDKROOT" >> $GITHUB_ENV
       - name: Configure
-        run: cmake --preset tidy -D CMAKE_CXX_COMPILER="$CMAKE_CXX_COMPILER" -D CMAKE_AR="$CMAKE_AR" -D CMAKE_RANLIB="$CMAKE_RANLIB"
+        run: cmake --preset tidy -D CMAKE_CXX_COMPILER="$CMAKE_CXX_COMPILER" -D CMAKE_AR="$CMAKE_AR" -D CMAKE_RANLIB="$CMAKE_RANLIB" -D CMAKE_OSX_SYSROOT="$SDKROOT"
       - name: Build
         run: cmake --build --preset tidy
