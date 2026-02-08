@@ -3,9 +3,12 @@
 
 #include <cassert>
 #include <compare>
+#include <concepts>
+#include <ranges>
 #include <string>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 struct Counted {
     inline static int destroyed = 0;
@@ -153,6 +156,59 @@ auto main() -> mayo::i32 {
     }
 
     {
+        mayo::Option<mayo::i32> none{mayo::NONE};
+        mayo::Option<mayo::i32> some{3};
+
+        assert(none.begin() == none.end());
+        assert(some.begin() != some.end());
+        assert(*some.begin() == 3);
+
+        auto sum = 0;
+        for (auto value : some) {
+            sum += value;
+        }
+        assert(sum == 3);
+
+        auto none_sum = 0;
+        for (auto value : none) {
+            none_sum += value;
+        }
+        assert(none_sum == 0);
+    }
+
+    {
+        const mayo::Option<mayo::i32> NONE{mayo::NONE};
+        const mayo::Option<mayo::i32> SOME{7};
+
+        assert(NONE.begin() == NONE.end());
+        assert(SOME.begin() != SOME.end());
+        assert(*SOME.begin() == 7);
+    }
+
+    {
+        static_assert(std::equality_comparable_with<mayo::i32, mayo::i32>);
+        static_assert(std::equality_comparable_with<mayo::Option<mayo::i32>, mayo::Option<mayo::i32>>);
+        static_assert(std::equality_comparable_with<mayo::Option<mayo::i32>*, mayo::Option<mayo::i32>*>);
+        static_assert(std::equality_comparable_with<mayo::i32*, mayo::i32*>);
+
+        std::vector<mayo::Option<mayo::i32>> values{
+            mayo::Option<mayo::i32>{0},
+            mayo::Option<mayo::i32>{mayo::NONE},
+            mayo::Option<mayo::i32>{3},
+        };
+
+        auto joined = values | std::views::join;
+        std::vector<mayo::i32> out{};
+        for (auto value : joined) {
+            out.push_back(value);
+        }
+
+        assert(out.size() == 2);
+        assert(out[0] == 0);
+        assert(out[1] == 3);
+    }
+
+    {
         static_assert(std::is_constructible_v<mayo::Option<std::string>, const char*>);
         static_assert(!std::is_convertible_v<const char*, mayo::Option<std::string>>);
         static_assert(!std::is_constructible_v<mayo::Option<mayo::i32>, std::string>);
@@ -162,30 +218,18 @@ auto main() -> mayo::i32 {
         static_assert(std::is_convertible_v<mayo::Option<mayo::i32>, bool>);
         static_assert(std::is_convertible_v<mayo::Option<mayo::i32>, mayo::Option<mayo::i32>>);
 
-        static_assert(std::is_same_v<decltype(*std::declval<mayo::Option<mayo::i32>&>()),
-            mayo::i32&>);
-        static_assert(std::is_same_v<decltype(*std::declval<const mayo::Option<mayo::i32>&>()),
-            const mayo::i32&>);
-        static_assert(std::is_same_v<decltype(*std::declval<mayo::Option<mayo::i32>&&>()),
-            mayo::i32&&>);
-        static_assert(std::is_same_v<decltype(*std::declval<const mayo::Option<mayo::i32>&&>()),
-            const mayo::i32&&>);
-        static_assert(std::is_same_v<
-            decltype(std::declval<mayo::Option<std::string>&>().operator->()),
-            std::string*>);
-        static_assert(std::is_same_v<
-            decltype(std::declval<const mayo::Option<std::string>&>().operator->()),
-            const std::string*>);
+        static_assert(std::is_same_v<decltype(*std::declval<mayo::Option<mayo::i32>&>()), mayo::i32&>);
+        static_assert(std::is_same_v<decltype(*std::declval<const mayo::Option<mayo::i32>&>()), const mayo::i32&>);
+        static_assert(std::is_same_v<decltype(*std::declval<mayo::Option<mayo::i32>&&>()), mayo::i32&&>);
+        static_assert(std::is_same_v<decltype(*std::declval<const mayo::Option<mayo::i32>&&>()), const mayo::i32&&>);
+        static_assert(std::is_same_v<decltype(std::declval<mayo::Option<std::string>&>().operator->()), std::string*>);
+        static_assert(std::is_same_v<decltype(std::declval<const mayo::Option<std::string>&>().operator->()), const std::string*>);
 
-        static_assert(noexcept(mayo::Option<NoThrowMove>{
-            std::declval<mayo::Option<NoThrowMove>&&>()}));
-        static_assert(!noexcept(mayo::Option<ThrowMove>{
-            std::declval<mayo::Option<ThrowMove>&&>()}));
+        static_assert(noexcept(mayo::Option<NoThrowMove>{std::declval<mayo::Option<NoThrowMove>&&>()}));
+        static_assert(!noexcept(mayo::Option<ThrowMove>{std::declval<mayo::Option<ThrowMove>&&>()}));
 
-        static_assert(noexcept(std::declval<mayo::Option<NoThrowMove>&>()
-            = std::declval<mayo::Option<NoThrowMove>&&>()));
-        static_assert(!noexcept(std::declval<mayo::Option<ThrowMove>&>()
-            = std::declval<mayo::Option<ThrowMove>&&>()));
+        static_assert(noexcept(std::declval<mayo::Option<NoThrowMove>&>() = std::declval<mayo::Option<NoThrowMove>&&>()));
+        static_assert(!noexcept(std::declval<mayo::Option<ThrowMove>&>() = std::declval<mayo::Option<ThrowMove>&&>()));
     }
 
     return 0;

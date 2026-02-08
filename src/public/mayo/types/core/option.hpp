@@ -278,6 +278,21 @@ namespace types::core {
             has_value = false;
         }
 
+      public:
+        /**
+         * 値との等値比較（Optionと値）
+         */
+        template <class U>
+        constexpr auto operator==(const U& y) const noexcept(noexcept(std::declval<const T&>() == std::declval<const U&>())) -> bool
+            requires(!concepts::is_option_type<U> && concepts::equality_comparable_with<T, U>)
+        {
+            if (is_none()) {
+                return false;
+            }
+
+            return **this == y;
+        }
+
         /**
          * Option同士の等値比較
          */
@@ -292,30 +307,6 @@ namespace types::core {
             }
 
             return *x == *y;
-        }
-
-        /**
-         * 値との等値比較（Optionと値）
-         */
-        template <class U>
-        friend constexpr auto operator==(const Option& x, const U& y) noexcept(noexcept(*x == y)) -> bool
-            requires(!concepts::is_option_type<U> && concepts::equality_comparable_with<T, U>)
-        {
-            if (x.is_none()) {
-                return false;
-            }
-
-            return *x == y;
-        }
-
-        /**
-         * 値との等値比較（値とOption）
-         */
-        template <class U>
-        friend constexpr auto operator==(const U& x, const Option& y) noexcept(noexcept(x == *y)) -> bool
-            requires(!concepts::is_option_type<U> && concepts::equality_comparable_with<U, T>)
-        {
-            return y == x;
         }
 
         /**
@@ -346,34 +337,17 @@ namespace types::core {
          * 値との三方比較（Optionと値）
          */
         template <class U>
-        friend constexpr auto operator<=>(const Option& x, const U& y) noexcept(noexcept(*x <=> y))
+        constexpr auto operator<=>(const U& y) const noexcept(noexcept(std::declval<const T&>() <=> std::declval<const U&>()))
             requires(!concepts::is_option_type<U> && concepts::three_way_comparable_with<T, U>)
         {
             using R = std::compare_three_way_result_t<T, U>;
             using C = std::common_comparison_category_t<R, std::strong_ordering>;
 
-            if (x.is_none()) {
+            if (is_none()) {
                 return static_cast<C>(false <=> true);
             }
 
-            return static_cast<C>(*x <=> y);
-        }
-
-        /**
-         * 値との三方比較（値とOption）
-         */
-        template <class U>
-        friend constexpr auto operator<=>(const U& x, const Option<T>& y) noexcept(noexcept(x <=> *y))
-            requires(!concepts::is_option_type<U> && concepts::three_way_comparable_with<U, T>)
-        {
-            using R = std::compare_three_way_result_t<U, T>;
-            using C = std::common_comparison_category_t<R, std::strong_ordering>;
-
-            if (y.is_none()) {
-                return static_cast<C>(true <=> false);
-            }
-
-            return static_cast<C>(x <=> *y);
+            return static_cast<C>(**this <=> y);
         }
 
         /**
