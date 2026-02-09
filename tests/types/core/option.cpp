@@ -39,6 +39,18 @@ struct ThrowMove {
     ThrowMove(ThrowMove&&) noexcept(false) {}
 };
 
+struct RebuildOnly {
+    int value = 0;
+
+    explicit RebuildOnly(int v)
+        : value{v} {}
+
+    RebuildOnly(const RebuildOnly&) = default;
+    RebuildOnly(RebuildOnly&&) = default;
+    auto operator=(const RebuildOnly&) -> RebuildOnly& = delete;
+    auto operator=(RebuildOnly&&) -> RebuildOnly& = delete;
+};
+
 auto main() -> mayo::i32 {
     {
         constexpr mayo::Option<mayo::i32> NONE{};
@@ -104,6 +116,18 @@ auto main() -> mayo::i32 {
         f = 7;
         assert(f.is_some());
         assert(*f == 7);
+    }
+
+    {
+        mayo::Option<RebuildOnly> value{RebuildOnly{11}};
+        value = *value;
+        assert(value.is_some());
+        assert(value->value == 11);
+
+        RebuildOnly other{29};
+        value = other;
+        assert(value.is_some());
+        assert(value->value == 29);
     }
 
     {
@@ -215,7 +239,7 @@ auto main() -> mayo::i32 {
         static_assert(std::is_assignable_v<mayo::Option<std::string>&, const char*>);
         static_assert(!std::is_assignable_v<mayo::Option<mayo::i32>&, std::string>);
         static_assert(std::is_assignable_v<mayo::Option<mayo::i32>&, mayo::types::core::None>);
-        static_assert(std::is_convertible_v<mayo::Option<mayo::i32>, bool>);
+        static_assert(!std::is_convertible_v<mayo::Option<mayo::i32>, bool>);
         static_assert(std::is_convertible_v<mayo::Option<mayo::i32>, mayo::Option<mayo::i32>>);
 
         static_assert(std::is_same_v<decltype(*std::declval<mayo::Option<mayo::i32>&>()), mayo::i32&>);

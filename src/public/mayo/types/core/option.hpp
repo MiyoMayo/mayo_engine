@@ -91,18 +91,20 @@ namespace types::core {
          * コピー構築する
          */
         constexpr Option(const Option& other)
+            requires(concepts::copy_constructible<T>)
             : storage{}
             , has_value{false} {
-            construct_from_other(other);
+            init_from_other(other);
         }
 
         /**
          * ムーブ構築する
          */
         constexpr Option(Option&& other) noexcept(concepts::is_nothrow_move_constructible<T>)
+            requires(concepts::move_constructible<T>)
             : storage{}
             , has_value{false} {
-            construct_from_other(std::move(other));
+            init_from_other(std::move(other));
         }
 
         /**
@@ -138,15 +140,19 @@ namespace types::core {
         /**
          * コピー代入する
          */
-        constexpr auto operator=(const Option& other) -> Option& {
-            return construct_from_other(other);
+        constexpr auto operator=(const Option& other) -> Option&
+            requires(concepts::copy_constructible<T>)
+        {
+            return assign_from_other(other);
         }
 
         /**
          * ムーブ代入する
          */
-        constexpr auto operator=(Option&& other) noexcept(concepts::is_nothrow_move_assignable<T> && concepts::is_nothrow_move_constructible<T>) -> Option& {
-            return construct_from_other(std::move(other));
+        constexpr auto operator=(Option&& other) noexcept(concepts::is_nothrow_move_constructible<T>) -> Option&
+            requires(concepts::move_constructible<T>)
+        {
+            return assign_from_other(std::move(other));
         }
 
         /**
@@ -157,7 +163,27 @@ namespace types::core {
          */
         template <concepts::convertible_to<T> U>
         constexpr auto operator=(U&& value) -> Option& {
-            emplace(std::forward<U>(value));
+            // o = *oのような自己参照代入は処理しない
+            if constexpr (concepts::is_lvalue_ref<U&&> && concepts::same_as<std::remove_cvref_t<U>, T>) {
+                if (has_value && std::addressof(storage.value) == std::addressof(value)) {
+                    return *this;
+                }
+            }
+
+            if (has_value) {
+                // 既存値があって代入可能なら、再構築せず代入のみ行う
+                if constexpr (concepts::assignable_from<T&, U&&>) {
+                    storage.value = std::forward<U>(value);
+                } else {
+                    // 代入不可なら、先に一時を作ってから再構築する（破棄後参照の回避）
+                    T tmp{std::forward<U>(value)};
+                    emplace(std::move(tmp));
+                }
+            } else {
+                // Noneの場合は新規構築する
+                emplace(std::forward<U>(value));
+            }
+
             return *this;
         }
 
@@ -185,7 +211,7 @@ namespace types::core {
         /**
          * 値の有無をboolとして取得
          */
-        constexpr operator bool() const noexcept {
+        explicit constexpr operator bool() const noexcept {
             return has_value;
         }
 
@@ -241,21 +267,44 @@ namespace types::core {
         }
 
         /**
-         * 同型Optionから構築/代入する
+         * 同型Optionから構築する
          */
         template <class Other>
-        constexpr auto construct_from_other(Other&& other) -> Option&
+        constexpr auto init_from_other(Other&& other) -> void
             requires(concepts::same_as<Option, std::remove_cvref_t<Other>>)
         {
+            if (!other.has_value) {
+                return;
+            }
+
+            emplace(std::forward_like<Other>(other.storage.value));
+        }
+
+        /**
+         * 同型Optionから代入する
+         */
+        template <class Other>
+        constexpr auto assign_from_other(Other&& other) -> Option&
+            requires(concepts::same_as<Option, std::remove_cvref_t<Other>>)
+        {
+            // 自己代入は何もしない
             if (std::addressof(*this) == std::addressof(other)) {
                 return *this;
             }
 
             if (has_value && other.has_value) {
-                storage.value = std::forward_like<Other>(other.storage.value);
+                // `Some` <- `Some`: 代入可能なら代入、不可なら再構築する
+                if constexpr (concepts::assignable_from<T&, decltype(std::forward_like<Other>(other.storage.value))>) {
+                    storage.value = std::forward_like<Other>(other.storage.value);
+                } else {
+                    destroy();
+                    emplace(std::forward_like<Other>(other.storage.value));
+                }
             } else if (has_value && !other.has_value) {
+                // `Some` <- `None`: 値を破棄する
                 destroy();
             } else if (!has_value && other.has_value) {
+                // `None` <- `Some`: 新規構築する
                 emplace(std::forward_like<Other>(other.storage.value));
             }
 
