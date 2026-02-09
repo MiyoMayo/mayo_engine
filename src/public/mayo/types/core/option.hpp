@@ -1,10 +1,12 @@
 #pragma once
 
 #include "mayo/types/concepts.hpp"
+#include "mayo/types/concepts/functional.hpp"
 #include "mayo/types/core/numeric.hpp"
 #include <cassert>
 #include <compare>
 #include <cstddef>
+#include <functional>
 #include <memory>
 #include <string>
 #include <type_traits>
@@ -234,11 +236,33 @@ namespace types::core {
             return has_value;
         }
 
+        template <class Self, class Pred>
+        constexpr auto is_some_and(this Self&& self, Pred&& pred) -> bool
+            requires(concepts::predicate_for<Pred, decltype(std::forward_like<Self>(self.storage.value))>)
+        {
+            if (!self.has_value) {
+                return false;
+            }
+
+            return static_cast<bool>(std::invoke(std::forward<Pred>(pred), std::forward_like<Self>(self.storage.value)));
+        }
+
         /**
          * 値が存在しないか
          */
         constexpr auto is_none() const noexcept -> bool {
             return !has_value;
+        }
+
+        template <class Self, class Pred>
+        constexpr auto is_none_or(this Self&& self, Pred&& pred) -> bool
+            requires(concepts::predicate_for<Pred, decltype(std::forward_like<Self>(self.storage.value))>)
+        {
+            if (!self.has_value) {
+                return true;
+            }
+
+            return static_cast<bool>(std::invoke(std::forward<Pred>(pred), std::forward_like<Self>(self.storage.value)));
         }
 
         /**
