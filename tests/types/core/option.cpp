@@ -234,6 +234,33 @@ auto main() -> mayo::i32 {
     }
 
     {
+        mayo::Option<mayo::i32> none{mayo::NONE};
+        auto none_slice = none.as_slice();
+        assert(none_slice.empty());
+        assert(none_slice.size() == 0);
+
+        const mayo::Option<mayo::i32> some{31};
+        auto some_slice = some.as_slice();
+        assert(!some_slice.empty());
+        assert(some_slice.size() == 1);
+        assert(some_slice[0] == 31);
+    }
+
+    {
+        mayo::Option<mayo::i32> some{44};
+        auto some_slice = some.as_mut_slice();
+        assert(!some_slice.empty());
+        assert(some_slice.size() == 1);
+        some_slice[0] = 66;
+        assert(*some == 66);
+
+        mayo::Option<mayo::i32> none{mayo::NONE};
+        auto none_slice = none.as_mut_slice();
+        assert(none_slice.empty());
+        assert(none_slice.size() == 0);
+    }
+
+    {
         static_assert(std::equality_comparable_with<mayo::i32, mayo::i32>);
         static_assert(std::equality_comparable_with<mayo::Option<mayo::i32>, mayo::Option<mayo::i32>>);
         static_assert(std::equality_comparable_with<mayo::Option<mayo::i32>*, mayo::Option<mayo::i32>*>);
@@ -274,6 +301,8 @@ auto main() -> mayo::i32 {
         static_assert(std::is_same_v<decltype(std::declval<const mayo::Option<std::string>&>().operator->()), const std::string*>);
         static_assert(std::is_same_v<decltype(std::declval<const mayo::Option<mayo::i32>&>().as_ref()), mayo::Option<mayo::Ref<const mayo::i32>>>);
         static_assert(std::is_same_v<decltype(std::declval<mayo::Option<mayo::i32>&>().as_mut()), mayo::Option<mayo::Ref<mayo::i32>>>);
+        static_assert(std::is_same_v<decltype(std::declval<const mayo::Option<mayo::i32>&>().as_slice()), std::span<const mayo::i32>>);
+        static_assert(std::is_same_v<decltype(std::declval<mayo::Option<mayo::i32>&>().as_mut_slice()), std::span<mayo::i32>>);
 
         static_assert(noexcept(mayo::Option<NoThrowMove>{std::declval<mayo::Option<NoThrowMove>&&>()}));
         static_assert(!noexcept(mayo::Option<ThrowMove>{std::declval<mayo::Option<ThrowMove>&&>()}));

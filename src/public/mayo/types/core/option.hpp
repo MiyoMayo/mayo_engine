@@ -9,6 +9,7 @@
 #include <cstddef>
 #include <functional>
 #include <memory>
+#include <span>
 #include <string>
 #include <type_traits>
 #include <utility>
@@ -303,6 +304,44 @@ namespace types::core {
         // 一時オブジェクトからの参照取り出しを防ぐ
         constexpr auto as_mut(this Option&&) = delete;
         constexpr auto as_mut(this const Option&&) = delete;
+
+        /**
+         * 値を長さ0/1のconstスライスとして返す
+         *
+         * - Some(T) -> span<const T>{&value, 1}
+         * - None    -> 空span
+         */
+        constexpr auto as_slice(this const Option& self) noexcept -> std::span<const T> {
+            if (!self.has_value) {
+                return std::span<const T>{};
+            }
+
+            return std::span<const T>{std::addressof(self.storage.value), 1};
+        }
+
+        // 一時オブジェクトからのスライス取り出しを防ぐ
+        constexpr auto as_slice(this Option&&) = delete;
+        constexpr auto as_slice(this const Option&&) = delete;
+
+        /**
+         * 値を長さ0/1の可変スライスとして返す
+         *
+         * - Some(T) -> span<T>{&value, 1}
+         * - None    -> 空span
+         */
+        constexpr auto as_mut_slice(this Option& self) noexcept -> std::span<T>
+            requires(!concepts::is_const<T>)
+        {
+            if (!self.has_value) {
+                return std::span<T>{};
+            }
+
+            return std::span<T>{std::addressof(self.storage.value), 1};
+        }
+
+        // 一時オブジェクトからのスライス取り出しを防ぐ
+        constexpr auto as_mut_slice(this Option&&) = delete;
+        constexpr auto as_mut_slice(this const Option&&) = delete;
 
         /**
          * 値を取り出す
