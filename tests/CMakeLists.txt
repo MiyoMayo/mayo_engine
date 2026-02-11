@@ -27,3 +27,4 @@ endfunction()
 
 add_unit_test(types/concepts.cpp)
 add_unit_test(types/core/option.cpp)
+add_unit_test(types/core/ref.cpp)
