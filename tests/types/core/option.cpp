@@ -288,6 +288,22 @@ auto main() -> mayo::i32 {
     }
 
     {
+        mayo::Option<std::string> none{mayo::NONE};
+        auto captured = std::string{};
+        auto thrown = false;
+
+        try {
+            (void)none->size();
+        } catch (const std::runtime_error& e) {
+            captured = e.what();
+            thrown = true;
+        }
+
+        assert(thrown);
+        assert(captured == "Optionに値がありません。");
+    }
+
+    {
         static_assert(std::equality_comparable_with<mayo::i32, mayo::i32>);
         static_assert(std::equality_comparable_with<mayo::Option<mayo::i32>, mayo::Option<mayo::i32>>);
         static_assert(std::equality_comparable_with<mayo::Option<mayo::i32>*, mayo::Option<mayo::i32>*>);

@@ -206,11 +206,14 @@ namespace types::core {
         /**
          * 値ポインタの取得
          *
-         * @note 値が無い場合はassertで停止する
+         * @note 値が無い場合は例外を送出する
          */
         template <class Self>
-        constexpr auto operator->(this Self& self) noexcept -> auto {
-            assert(self.has_value);
+        constexpr auto operator->(this Self& self) -> auto {
+            if (!self.has_value) {
+                throw std::runtime_error{"Optionに値がありません。"};
+            }
+
             return std::addressof(self.storage.value);
         }
 
@@ -361,11 +364,14 @@ namespace types::core {
         /**
          * 値を取り出す
          *
-         * @note 値が無い場合はassertで停止する
+         * @note 値が無い場合は例外を送出する
          */
         template <class Self>
         constexpr auto unwrap(this Self&& self) -> decltype(auto) {
-            assert(self.has_value);
+            if (!self.has_value) {
+                throw std::runtime_error{"Optionに値がありません。"};
+            }
+
             return std::forward_like<Self>(self.storage.value);
         }
 
