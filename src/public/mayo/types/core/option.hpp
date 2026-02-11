@@ -2,6 +2,7 @@
 
 #include "mayo/types/concepts.hpp"
 #include "mayo/types/concepts/functional.hpp"
+#include "mayo/types/concepts/std.hpp"
 #include "mayo/types/core/numeric.hpp"
 #include "mayo/types/core/ref.hpp"
 #include <cassert>
@@ -372,6 +373,76 @@ namespace types::core {
                 throw std::runtime_error{"Optionに値がありません。"};
             }
 
+            return std::forward_like<Self>(self.storage.value);
+        }
+
+        /**
+         * 値を取り出す。Noneなら代替値を返す
+         *
+         * - Some(T) -> 値のコピーを返す
+         * - None    -> fallback のコピーを返す
+         */
+        constexpr auto unwrap_or(this const Option& self, const T& fallback) -> T
+            requires(concepts::copy_constructible<T>)
+        {
+            return self.has_value ? self.storage.value : fallback;
+        }
+
+        /**
+         * 値を取り出す。Noneなら代替値を返す
+         *
+         * - Some(T) -> 値をムーブして返す
+         * - None    -> fallback をムーブして返す
+         */
+        constexpr auto unwrap_or(this Option&& self, T fallback) -> T {
+            return self.has_value ? std::forward<T>(self.storage.value) : std::move(fallback);
+        }
+
+        /**
+         * 値を取り出す。Noneなら遅延評価で代替値を生成して返す
+         */
+        template <class F>
+        constexpr auto unwrap_or_else(this const Option& self, F&& fallback) -> T
+            requires(concepts::copy_constructible<T> && concepts::is_invocable_result_convertible<T, F>)
+        {
+            return self.has_value ? self.storage.value : std::invoke(std::forward<F>(fallback));
+        }
+
+        /**
+         * 値を取り出す。Noneなら遅延評価で代替値を生成して返す
+         */
+        template <class F>
+        constexpr auto unwrap_or_else(this Option&& self, F&& fallback) -> T
+            requires(concepts::is_invocable_result_convertible<T, F>)
+        {
+            return self.has_value ? std::forward<T>(self.storage.value) : std::invoke(std::forward<F>(fallback));
+        }
+
+        /**
+         * 値を取り出す。Noneならデフォルト値を返す
+         */
+        constexpr auto unwrap_or_default(this const Option& self) -> T
+            requires(concepts::copy_constructible<T> && concepts::default_initializable<T>)
+        {
+            return self.has_value ? self.storage.value : T{};
+        }
+
+        /**
+         * 値を取り出す。Noneならデフォルト値を返す
+         */
+        constexpr auto unwrap_or_default(this Option&& self) -> T
+            requires(concepts::copy_constructible<T> && concepts::default_initializable<T>)
+        {
+            return self.has_value ? std::forward<T>(self.storage.value) : T{};
+        }
+
+        /**
+         * 値をチェックせずに取り出す
+         *
+         * @note Noneで呼ぶと未定義動作
+         */
+        template <class Self>
+        constexpr auto unwrap_unchecked(this Self&& self) noexcept -> decltype(auto) {
             return std::forward_like<Self>(self.storage.value);
         }
 

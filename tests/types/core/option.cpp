@@ -304,6 +304,71 @@ auto main() -> mayo::i32 {
     }
 
     {
+        const mayo::Option<mayo::i32> some{10};
+        const mayo::Option<mayo::i32> none{mayo::NONE};
+        assert(some.unwrap_or(99) == 10);
+        assert(none.unwrap_or(99) == 99);
+    }
+
+    {
+        auto some = mayo::Option<std::string>{"alive"};
+        auto none = mayo::Option<std::string>{mayo::NONE};
+        assert(std::move(some).unwrap_or("fallback") == "alive");
+        assert(std::move(none).unwrap_or("fallback") == "fallback");
+    }
+
+    {
+        const mayo::Option<mayo::i32> some{7};
+        const mayo::Option<mayo::i32> none{mayo::NONE};
+        auto called = 0;
+
+        auto from_some = some.unwrap_or_else([&]() {
+            ++called;
+            return 100;
+        });
+        assert(from_some == 7);
+        assert(called == 0);
+
+        auto from_none = none.unwrap_or_else([&]() {
+            ++called;
+            return 100;
+        });
+        assert(from_none == 100);
+        assert(called == 1);
+    }
+
+    {
+        auto some = mayo::Option<std::string>{"x"};
+        auto none = mayo::Option<std::string>{mayo::NONE};
+        assert(std::move(some).unwrap_or_else([] { return std::string{"fallback"}; }) == "x");
+        assert(std::move(none).unwrap_or_else([] { return std::string{"fallback"}; }) == "fallback");
+    }
+
+    {
+        const mayo::Option<std::string> none{mayo::NONE};
+        const mayo::Option<std::string> some{"value"};
+        assert(none.unwrap_or_default().empty());
+        assert(some.unwrap_or_default() == "value");
+    }
+
+    {
+        auto none = mayo::Option<std::string>{mayo::NONE};
+        auto some = mayo::Option<std::string>{"value"};
+        assert(std::move(none).unwrap_or_default().empty());
+        assert(std::move(some).unwrap_or_default() == "value");
+    }
+
+    {
+        mayo::Option<std::string> some{"unsafe"};
+        auto& value = some.unwrap_unchecked();
+        value = "updated";
+        assert(*some == "updated");
+
+        const mayo::Option<mayo::i32> CONST_SOME{5};
+        assert(CONST_SOME.unwrap_unchecked() == 5);
+    }
+
+    {
         static_assert(std::equality_comparable_with<mayo::i32, mayo::i32>);
         static_assert(std::equality_comparable_with<mayo::Option<mayo::i32>, mayo::Option<mayo::i32>>);
         static_assert(std::equality_comparable_with<mayo::Option<mayo::i32>*, mayo::Option<mayo::i32>*>);
@@ -350,9 +415,21 @@ auto main() -> mayo::i32 {
         static_assert(std::is_same_v<decltype(std::declval<const mayo::Option<mayo::i32>&>().expect(std::declval<std::string_view>())), const mayo::i32&>);
         static_assert(std::is_same_v<decltype(std::declval<mayo::Option<mayo::i32>&&>().expect(std::declval<std::string_view>())), mayo::i32&&>);
         static_assert(std::is_same_v<decltype(std::declval<const mayo::Option<mayo::i32>&&>().expect(std::declval<std::string_view>())), const mayo::i32&&>);
+        static_assert(std::is_same_v<decltype(std::declval<const mayo::Option<mayo::i32>&>().unwrap_or(0)), mayo::i32>);
+        static_assert(std::is_same_v<decltype(std::declval<mayo::Option<mayo::i32>&&>().unwrap_or(0)), mayo::i32>);
+        static_assert(std::is_same_v<decltype(std::declval<const mayo::Option<mayo::i32>&>().unwrap_or_else([] { return 0; })), mayo::i32>);
+        static_assert(std::is_same_v<decltype(std::declval<mayo::Option<mayo::i32>&&>().unwrap_or_else([] { return 0; })), mayo::i32>);
+        static_assert(std::is_same_v<decltype(std::declval<const mayo::Option<mayo::i32>&>().unwrap_or_default()), mayo::i32>);
+        static_assert(std::is_same_v<decltype(std::declval<mayo::Option<mayo::i32>&&>().unwrap_or_default()), mayo::i32>);
+        static_assert(std::is_same_v<decltype(std::declval<mayo::Option<mayo::i32>&>().unwrap_unchecked()), mayo::i32&>);
+        static_assert(std::is_same_v<decltype(std::declval<const mayo::Option<mayo::i32>&>().unwrap_unchecked()), const mayo::i32&>);
+        static_assert(std::is_same_v<decltype(std::declval<mayo::Option<mayo::i32>&&>().unwrap_unchecked()), mayo::i32&&>);
+        static_assert(std::is_same_v<decltype(std::declval<const mayo::Option<mayo::i32>&&>().unwrap_unchecked()), const mayo::i32&&>);
 
         static_assert(noexcept(mayo::Option<NoThrowMove>{std::declval<mayo::Option<NoThrowMove>&&>()}));
         static_assert(!noexcept(mayo::Option<ThrowMove>{std::declval<mayo::Option<ThrowMove>&&>()}));
+        static_assert(!noexcept(std::declval<mayo::Option<ThrowMove>&&>().unwrap_or(ThrowMove{})));
+        static_assert(noexcept(std::declval<mayo::Option<mayo::i32>&>().unwrap_unchecked()));
 
         static_assert(noexcept(std::declval<mayo::Option<NoThrowMove>&>() = std::declval<mayo::Option<NoThrowMove>&&>()));
         static_assert(!noexcept(std::declval<mayo::Option<ThrowMove>&>() = std::declval<mayo::Option<ThrowMove>&&>()));
