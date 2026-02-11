@@ -5,6 +5,7 @@
 #include <compare>
 #include <concepts>
 #include <ranges>
+#include <stdexcept>
 #include <string>
 #include <type_traits>
 #include <utility>
@@ -261,6 +262,32 @@ auto main() -> mayo::i32 {
     }
 
     {
+        mayo::Option<std::string> some{"hello"};
+        auto& value = some.expect("unused");
+        assert(value == "hello");
+
+        value = "updated";
+        assert(some.is_some());
+        assert(*some == "updated");
+    }
+
+    {
+        mayo::Option<std::string> none{mayo::NONE};
+        auto captured = std::string{};
+        auto thrown = false;
+
+        try {
+            (void)none.expect("custom message");
+        } catch (const std::runtime_error& e) {
+            captured = e.what();
+            thrown = true;
+        }
+
+        assert(thrown);
+        assert(captured == "custom message");
+    }
+
+    {
         static_assert(std::equality_comparable_with<mayo::i32, mayo::i32>);
         static_assert(std::equality_comparable_with<mayo::Option<mayo::i32>, mayo::Option<mayo::i32>>);
         static_assert(std::equality_comparable_with<mayo::Option<mayo::i32>*, mayo::Option<mayo::i32>*>);
@@ -303,6 +330,10 @@ auto main() -> mayo::i32 {
         static_assert(std::is_same_v<decltype(std::declval<mayo::Option<mayo::i32>&>().as_mut()), mayo::Option<mayo::Ref<mayo::i32>>>);
         static_assert(std::is_same_v<decltype(std::declval<const mayo::Option<mayo::i32>&>().as_slice()), std::span<const mayo::i32>>);
         static_assert(std::is_same_v<decltype(std::declval<mayo::Option<mayo::i32>&>().as_mut_slice()), std::span<mayo::i32>>);
+        static_assert(std::is_same_v<decltype(std::declval<mayo::Option<mayo::i32>&>().expect(std::declval<std::string_view>())), mayo::i32&>);
+        static_assert(std::is_same_v<decltype(std::declval<const mayo::Option<mayo::i32>&>().expect(std::declval<std::string_view>())), const mayo::i32&>);
+        static_assert(std::is_same_v<decltype(std::declval<mayo::Option<mayo::i32>&&>().expect(std::declval<std::string_view>())), mayo::i32&&>);
+        static_assert(std::is_same_v<decltype(std::declval<const mayo::Option<mayo::i32>&&>().expect(std::declval<std::string_view>())), const mayo::i32&&>);
 
         static_assert(noexcept(mayo::Option<NoThrowMove>{std::declval<mayo::Option<NoThrowMove>&&>()}));
         static_assert(!noexcept(mayo::Option<ThrowMove>{std::declval<mayo::Option<ThrowMove>&&>()}));

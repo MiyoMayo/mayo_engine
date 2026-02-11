@@ -10,7 +10,9 @@
 #include <functional>
 #include <memory>
 #include <span>
+#include <stdexcept>
 #include <string>
+#include <string_view>
 #include <type_traits>
 #include <utility>
 
@@ -342,6 +344,19 @@ namespace types::core {
         // 一時オブジェクトからのスライス取り出しを防ぐ
         constexpr auto as_mut_slice(this Option&&) = delete;
         constexpr auto as_mut_slice(this const Option&&) = delete;
+
+        /**
+         * 値を取り出す。Noneなら指定メッセージで例外を送出する
+         */
+        template <class Self>
+        constexpr auto expect(this Self&& self, std::string_view msg) -> decltype(auto) {
+            if (!self.has_value) {
+                // string_viewの範囲をそのまま例外メッセージへコピーする
+                throw std::runtime_error{std::string{msg}};
+            }
+
+            return std::forward_like<Self>(self.storage.value);
+        }
 
         /**
          * 値を取り出す
