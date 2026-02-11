@@ -210,6 +210,30 @@ auto main() -> mayo::i32 {
     }
 
     {
+        mayo::Option<mayo::i32> none{mayo::NONE};
+        auto none_ref = none.as_ref();
+        assert(none_ref.is_none());
+
+        const mayo::Option<mayo::i32> const_some{13};
+        auto const_ref = const_some.as_ref();
+        assert(const_ref.is_some());
+        assert(const_ref->get() == 13);
+    }
+
+    {
+        mayo::Option<mayo::i32> some{21};
+        auto value_mut = some.as_mut();
+        assert(value_mut.is_some());
+        value_mut->get() = 99;
+        assert(some.is_some());
+        assert(*some == 99);
+
+        mayo::Option<mayo::i32> none{mayo::NONE};
+        auto none_mut = none.as_mut();
+        assert(none_mut.is_none());
+    }
+
+    {
         static_assert(std::equality_comparable_with<mayo::i32, mayo::i32>);
         static_assert(std::equality_comparable_with<mayo::Option<mayo::i32>, mayo::Option<mayo::i32>>);
         static_assert(std::equality_comparable_with<mayo::Option<mayo::i32>*, mayo::Option<mayo::i32>*>);
@@ -248,6 +272,8 @@ auto main() -> mayo::i32 {
         static_assert(std::is_same_v<decltype(*std::declval<const mayo::Option<mayo::i32>&&>()), const mayo::i32&&>);
         static_assert(std::is_same_v<decltype(std::declval<mayo::Option<std::string>&>().operator->()), std::string*>);
         static_assert(std::is_same_v<decltype(std::declval<const mayo::Option<std::string>&>().operator->()), const std::string*>);
+        static_assert(std::is_same_v<decltype(std::declval<const mayo::Option<mayo::i32>&>().as_ref()), mayo::Option<mayo::Ref<const mayo::i32>>>);
+        static_assert(std::is_same_v<decltype(std::declval<mayo::Option<mayo::i32>&>().as_mut()), mayo::Option<mayo::Ref<mayo::i32>>>);
 
         static_assert(noexcept(mayo::Option<NoThrowMove>{std::declval<mayo::Option<NoThrowMove>&&>()}));
         static_assert(!noexcept(mayo::Option<ThrowMove>{std::declval<mayo::Option<ThrowMove>&&>()}));

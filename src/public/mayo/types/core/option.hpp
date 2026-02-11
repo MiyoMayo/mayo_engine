@@ -3,6 +3,7 @@
 #include "mayo/types/concepts.hpp"
 #include "mayo/types/concepts/functional.hpp"
 #include "mayo/types/core/numeric.hpp"
+#include "mayo/types/core/ref.hpp"
 #include <cassert>
 #include <compare>
 #include <cstddef>
@@ -264,6 +265,44 @@ namespace types::core {
 
             return static_cast<bool>(std::invoke(std::forward<Pred>(pred), std::forward_like<Self>(self.storage.value)));
         }
+
+        /**
+         * 値へのconst参照ラッパーを返す
+         *
+         * - Some(T) -> Some(Ref<const T>)
+         * - None    -> None
+         */
+        constexpr auto as_ref(this const Option& self) noexcept -> Option<Ref<const T>> {
+            if (!self.has_value) {
+                return NONE;
+            }
+
+            return Option<Ref<const T>>{Ref<const T>{self.storage.value}};
+        }
+
+        // 一時オブジェクトからの参照取り出しを防ぐ
+        constexpr auto as_ref(this Option&&) = delete;
+        constexpr auto as_ref(this const Option&&) = delete;
+
+        /**
+         * 値への可変参照ラッパーを返す
+         *
+         * - Some(T) -> Some(Ref<T>)
+         * - None    -> None
+         */
+        constexpr auto as_mut(this Option& self) noexcept -> Option<Ref<T>>
+            requires(!concepts::is_const<T>)
+        {
+            if (!self.has_value) {
+                return NONE;
+            }
+
+            return Option<Ref<T>>{Ref<T>{self.storage.value}};
+        }
+
+        // 一時オブジェクトからの参照取り出しを防ぐ
+        constexpr auto as_mut(this Option&&) = delete;
+        constexpr auto as_mut(this const Option&&) = delete;
 
         /**
          * 値を取り出す
