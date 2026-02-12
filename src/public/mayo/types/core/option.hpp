@@ -200,6 +200,7 @@ namespace types::core {
          * @note 値が無い場合は未定義
          */
         template <class Self>
+        [[nodiscard]]
         constexpr auto operator*(this Self&& self) -> decltype(auto) {
             return std::forward_like<Self>(self.storage.value);
         }
@@ -221,6 +222,7 @@ namespace types::core {
         /**
          * 値の有無をboolとして取得
          */
+        [[nodiscard]]
         explicit constexpr operator bool() const noexcept {
             return has_value;
         }
@@ -240,11 +242,13 @@ namespace types::core {
         /**
          * 値が存在するか
          */
+        [[nodiscard]]
         constexpr auto is_some() const noexcept -> bool {
             return has_value;
         }
 
         template <class Self, class Pred>
+        [[nodiscard]]
         constexpr auto is_some_and(this Self&& self, Pred&& pred) -> bool
             requires(concepts::predicate_for<Pred, decltype(std::forward_like<Self>(self.storage.value))>)
         {
@@ -258,11 +262,13 @@ namespace types::core {
         /**
          * 値が存在しないか
          */
+        [[nodiscard]]
         constexpr auto is_none() const noexcept -> bool {
             return !has_value;
         }
 
         template <class Self, class Pred>
+        [[nodiscard]]
         constexpr auto is_none_or(this Self&& self, Pred&& pred) -> bool
             requires(concepts::predicate_for<Pred, decltype(std::forward_like<Self>(self.storage.value))>)
         {
@@ -279,6 +285,7 @@ namespace types::core {
          * - Some(T) -> Some(Ref<const T>)
          * - None    -> None
          */
+        [[nodiscard]]
         constexpr auto as_ref(this const Option& self) noexcept -> Option<Ref<const T>> {
             if (!self.has_value) {
                 return NONE;
@@ -297,6 +304,7 @@ namespace types::core {
          * - Some(T) -> Some(Ref<T>)
          * - None    -> None
          */
+        [[nodiscard]]
         constexpr auto as_mut(this Option& self) noexcept -> Option<Ref<T>>
             requires(!concepts::is_const<T>)
         {
@@ -317,6 +325,7 @@ namespace types::core {
          * - Some(T) -> span<const T>{&value, 1}
          * - None    -> 空span
          */
+        [[nodiscard]]
         constexpr auto as_slice(this const Option& self) noexcept -> std::span<const T> {
             if (!self.has_value) {
                 return std::span<const T>{};
@@ -335,6 +344,7 @@ namespace types::core {
          * - Some(T) -> span<T>{&value, 1}
          * - None    -> 空span
          */
+        [[nodiscard]]
         constexpr auto as_mut_slice(this Option& self) noexcept -> std::span<T>
             requires(!concepts::is_const<T>)
         {
@@ -368,6 +378,7 @@ namespace types::core {
          * @note 値が無い場合は例外を送出する
          */
         template <class Self>
+        [[nodiscard("unwrapの戻り値を捨てる検証は避けて、検証目的ならexpectを使ってください。")]]
         constexpr auto unwrap(this Self&& self) -> decltype(auto) {
             if (!self.has_value) {
                 throw std::runtime_error{"Optionに値がありません。"};
@@ -382,6 +393,7 @@ namespace types::core {
          * - Some(T) -> 値のコピーを返す
          * - None    -> fallback のコピーを返す
          */
+        [[nodiscard]]
         constexpr auto unwrap_or(this const Option& self, const T& fallback) -> T
             requires(concepts::copy_constructible<T>)
         {
@@ -394,6 +406,7 @@ namespace types::core {
          * - Some(T) -> 値をムーブして返す
          * - None    -> fallback をムーブして返す
          */
+        [[nodiscard]]
         constexpr auto unwrap_or(this Option&& self, T fallback) -> T {
             return self.has_value ? std::forward<T>(self.storage.value) : std::move(fallback);
         }
@@ -402,6 +415,7 @@ namespace types::core {
          * 値を取り出す。Noneなら遅延評価で代替値を生成して返す
          */
         template <class F>
+        [[nodiscard]]
         constexpr auto unwrap_or_else(this const Option& self, F&& fallback) -> T
             requires(concepts::copy_constructible<T> && concepts::is_invocable_result_convertible<T, F>)
         {
@@ -412,6 +426,7 @@ namespace types::core {
          * 値を取り出す。Noneなら遅延評価で代替値を生成して返す
          */
         template <class F>
+        [[nodiscard]]
         constexpr auto unwrap_or_else(this Option&& self, F&& fallback) -> T
             requires(concepts::is_invocable_result_convertible<T, F>)
         {
@@ -421,6 +436,7 @@ namespace types::core {
         /**
          * 値を取り出す。Noneならデフォルト値を返す
          */
+        [[nodiscard]]
         constexpr auto unwrap_or_default(this const Option& self) -> T
             requires(concepts::copy_constructible<T> && concepts::default_initializable<T>)
         {
@@ -430,6 +446,7 @@ namespace types::core {
         /**
          * 値を取り出す。Noneならデフォルト値を返す
          */
+        [[nodiscard]]
         constexpr auto unwrap_or_default(this Option&& self) -> T
             requires(concepts::copy_constructible<T> && concepts::default_initializable<T>)
         {
@@ -442,6 +459,7 @@ namespace types::core {
          * @note Noneで呼ぶと未定義動作
          */
         template <class Self>
+        [[nodiscard]]
         constexpr auto unwrap_unchecked(this Self&& self) noexcept -> decltype(auto) {
             return std::forward_like<Self>(self.storage.value);
         }
@@ -453,6 +471,7 @@ namespace types::core {
          * - None    -> None
          */
         template <class F>
+        [[nodiscard]]
         constexpr auto map(this Option&& self, F&& f) -> Option<std::remove_cvref_t<std::invoke_result_t<F, T&&>>>
             requires(concepts::invocable<F, T &&> && concepts::is_object<std::remove_cvref_t<std::invoke_result_t<F, T &&>>>)
         {

@@ -41,3 +41,4 @@ AllowAllArgumentsOnNextLine: false
 PenaltyBreakBeforeFirstCallParameter: 1000
 PenaltyBreakOpenParenthesis: 2000
 BreakBeforeTernaryOperators: true
+BreakAfterAttributes: Always
