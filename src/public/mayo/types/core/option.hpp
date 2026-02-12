@@ -446,6 +446,25 @@ namespace types::core {
             return std::forward_like<Self>(self.storage.value);
         }
 
+        /**
+         * 関数で値を変換する
+         *
+         * - Some(T) -> Some(f(T&&))
+         * - None    -> None
+         */
+        template <class F>
+        constexpr auto map(this Option&& self, F&& f) -> Option<std::remove_cvref_t<std::invoke_result_t<F, T&&>>>
+            requires(concepts::invocable<F, T &&> && concepts::is_object<std::remove_cvref_t<std::invoke_result_t<F, T &&>>>)
+        {
+            using U = std::remove_cvref_t<std::invoke_result_t<F, T&&>>;
+
+            if (!self.has_value) {
+                return NONE;
+            }
+
+            return Option<U>{std::invoke(std::forward<F>(f), std::forward<T>(self.storage.value))};
+        }
+
       private:
         /**
          * 値を再構築する
