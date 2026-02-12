@@ -396,6 +396,28 @@ auto main() -> mayo::i32 {
     }
 
     {
+        auto some = mayo::Option<mayo::i32>{8};
+        auto called = 0;
+        auto inspected = std::move(some).inspect([&](const mayo::i32& v) {
+            ++called;
+            assert(v == 8);
+        });
+        assert(called == 1);
+        assert(inspected.is_some());
+        assert(*inspected == 8);
+    }
+
+    {
+        auto none = mayo::Option<mayo::i32>{mayo::NONE};
+        auto called = 0;
+        auto inspected = std::move(none).inspect([&](const mayo::i32&) {
+            ++called;
+        });
+        assert(called == 0);
+        assert(inspected.is_none());
+    }
+
+    {
         static_assert(std::equality_comparable_with<mayo::i32, mayo::i32>);
         static_assert(std::equality_comparable_with<mayo::Option<mayo::i32>, mayo::Option<mayo::i32>>);
         static_assert(std::equality_comparable_with<mayo::Option<mayo::i32>*, mayo::Option<mayo::i32>*>);
@@ -454,6 +476,7 @@ auto main() -> mayo::i32 {
         static_assert(std::is_same_v<decltype(std::declval<const mayo::Option<mayo::i32>&&>().unwrap_unchecked()), const mayo::i32&&>);
         static_assert(std::is_same_v<decltype(std::declval<mayo::Option<mayo::i32>&&>().map([](mayo::i32&& v) { return v + 1; })), mayo::Option<mayo::i32>>);
         static_assert(std::is_same_v<decltype(std::declval<mayo::Option<std::string>&&>().map([](std::string&& s) { return s.size(); })), mayo::Option<std::size_t>>);
+        static_assert(std::is_same_v<decltype(std::declval<mayo::Option<mayo::i32>&&>().inspect([](const mayo::i32&) {})), mayo::Option<mayo::i32>>);
 
         static_assert(noexcept(mayo::Option<NoThrowMove>{std::declval<mayo::Option<NoThrowMove>&&>()}));
         static_assert(!noexcept(mayo::Option<ThrowMove>{std::declval<mayo::Option<ThrowMove>&&>()}));

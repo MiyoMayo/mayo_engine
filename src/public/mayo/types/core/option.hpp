@@ -465,6 +465,23 @@ namespace types::core {
             return Option<U>{std::invoke(std::forward<F>(f), std::forward<T>(self.storage.value))};
         }
 
+        /**
+         * 値を観察する副作用フック
+         *
+         * - Some(T) -> f(const T&) を呼んで Some(T) を返す
+         * - None    -> 何も呼ばずに None を返す
+         */
+        template <class F>
+        constexpr auto inspect(this Option&& self, F&& f) -> Option<T>
+            requires(concepts::invocable<F, const T&>)
+        {
+            if (self.has_value) {
+                std::invoke(std::forward<F>(f), std::as_const(self.storage.value));
+            }
+
+            return std::move(self);
+        }
+
       private:
         /**
          * 値を再構築する
