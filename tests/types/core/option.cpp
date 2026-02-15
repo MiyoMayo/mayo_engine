@@ -40,6 +40,19 @@ struct ThrowMove {
     ThrowMove(ThrowMove&&) noexcept(false) {}
 };
 
+struct MoveOnly {
+    int value = 0;
+
+    MoveOnly() = default;
+    explicit MoveOnly(int v)
+        : value{v} {}
+
+    MoveOnly(const MoveOnly&) = delete;
+    MoveOnly(MoveOnly&&) noexcept = default;
+    auto operator=(const MoveOnly&) -> MoveOnly& = delete;
+    auto operator=(MoveOnly&&) noexcept -> MoveOnly& = default;
+};
+
 struct RebuildOnly {
     int value = 0;
 
@@ -515,6 +528,16 @@ auto main() -> mayo::i32 {
         static_assert(std::is_same_v<decltype(std::declval<mayo::Option<mayo::i32>&&>().unwrap_or_else([] { return 0; })), mayo::i32>);
         static_assert(std::is_same_v<decltype(std::declval<const mayo::Option<mayo::i32>&>().unwrap_or_default()), mayo::i32>);
         static_assert(std::is_same_v<decltype(std::declval<mayo::Option<mayo::i32>&&>().unwrap_or_default()), mayo::i32>);
+        static_assert(requires(mayo::Option<MoveOnly>&& o) {
+            std::move(o).unwrap_or(MoveOnly{});
+        });
+        static_assert(!mayo::concepts::constructible_from<MoveOnly, const MoveOnly&>);
+        static_assert(requires(mayo::Option<MoveOnly>&& o) {
+            std::move(o).unwrap_or_else([] { return MoveOnly{}; });
+        });
+        static_assert(requires(mayo::Option<MoveOnly>&& o) {
+            std::move(o).unwrap_or_default();
+        });
         static_assert(std::is_same_v<decltype(std::declval<mayo::Option<mayo::i32>&>().unwrap_unchecked()), mayo::i32&>);
         static_assert(std::is_same_v<decltype(std::declval<const mayo::Option<mayo::i32>&>().unwrap_unchecked()), const mayo::i32&>);
         static_assert(std::is_same_v<decltype(std::declval<mayo::Option<mayo::i32>&&>().unwrap_unchecked()), mayo::i32&&>);

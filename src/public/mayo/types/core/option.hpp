@@ -390,67 +390,37 @@ namespace types::core {
         /**
          * 値を取り出す。Noneなら代替値を返す
          *
-         * - Some(T) -> 値のコピーを返す
-         * - None    -> fallback のコピーを返す
+         * - Some(T) -> thisの値カテゴリに応じて値を返す
+         * - None    -> fallback を返す
          */
+        template <class Self>
         [[nodiscard]]
-        constexpr auto unwrap_or(this const Option& self, const T& fallback) -> T
-            requires(concepts::copy_constructible<T>)
+        constexpr auto unwrap_or(this Self&& self, T fallback) -> T
+            requires(concepts::constructible_from<T, decltype(std::forward_like<Self>(self.storage.value))>)
         {
-            return self.has_value ? self.storage.value : fallback;
-        }
-
-        /**
-         * 値を取り出す。Noneなら代替値を返す
-         *
-         * - Some(T) -> 値をムーブして返す
-         * - None    -> fallback をムーブして返す
-         */
-        [[nodiscard]]
-        constexpr auto unwrap_or(this Option&& self, T fallback) -> T {
-            return self.has_value ? std::forward<T>(self.storage.value) : std::move(fallback);
+            return self.has_value ? static_cast<T>(std::forward_like<Self>(self.storage.value)) : std::move(fallback);
         }
 
         /**
          * 値を取り出す。Noneなら遅延評価で代替値を生成して返す
          */
-        template <class F>
+        template <class Self, class F>
         [[nodiscard]]
-        constexpr auto unwrap_or_else(this const Option& self, F&& fallback) -> T
-            requires(concepts::copy_constructible<T> && concepts::is_invocable_result_convertible<T, F>)
+        constexpr auto unwrap_or_else(this Self&& self, F&& fallback) -> T
+            requires(concepts::constructible_from<T, decltype(std::forward_like<Self>(self.storage.value))> && concepts::is_invocable_result_convertible<T, F>)
         {
-            return self.has_value ? self.storage.value : std::invoke(std::forward<F>(fallback));
-        }
-
-        /**
-         * 値を取り出す。Noneなら遅延評価で代替値を生成して返す
-         */
-        template <class F>
-        [[nodiscard]]
-        constexpr auto unwrap_or_else(this Option&& self, F&& fallback) -> T
-            requires(concepts::is_invocable_result_convertible<T, F>)
-        {
-            return self.has_value ? std::forward<T>(self.storage.value) : std::invoke(std::forward<F>(fallback));
+            return self.has_value ? static_cast<T>(std::forward_like<Self>(self.storage.value)) : std::invoke(std::forward<F>(fallback));
         }
 
         /**
          * 値を取り出す。Noneならデフォルト値を返す
          */
+        template <class Self>
         [[nodiscard]]
-        constexpr auto unwrap_or_default(this const Option& self) -> T
-            requires(concepts::copy_constructible<T> && concepts::default_initializable<T>)
+        constexpr auto unwrap_or_default(this Self&& self) -> T
+            requires(concepts::default_initializable<T> && concepts::constructible_from<T, decltype(std::forward_like<Self>(self.storage.value))>)
         {
-            return self.has_value ? self.storage.value : T{};
-        }
-
-        /**
-         * 値を取り出す。Noneならデフォルト値を返す
-         */
-        [[nodiscard]]
-        constexpr auto unwrap_or_default(this Option&& self) -> T
-            requires(concepts::default_initializable<T>)
-        {
-            return self.has_value ? std::forward<T>(self.storage.value) : T{};
+            return self.has_value ? static_cast<T>(std::forward_like<Self>(self.storage.value)) : T{};
         }
 
         /**
@@ -473,7 +443,8 @@ namespace types::core {
         template <class F>
         [[nodiscard]]
         constexpr auto map(this Option&& self, F&& f) -> Option<std::remove_cvref_t<std::invoke_result_t<F, T&&>>>
-            requires(concepts::invocable<F, T &&> && concepts::is_object<std::remove_cvref_t<std::invoke_result_t<F, T &&>>>)
+            requires(concepts::is_invocable_result_convertible<std::remove_cvref_t<std::invoke_result_t<F, T&&>>, F, T&&>
+                && concepts::is_object<std::remove_cvref_t<std::invoke_result_t<F, T&&>>>)
         {
             using U = std::remove_cvref_t<std::invoke_result_t<F, T&&>>;
 
@@ -507,7 +478,7 @@ namespace types::core {
         template <class U, class F>
         [[nodiscard]]
         constexpr auto map_or(this Option&& self, U fallback, F&& f) -> U
-            requires(concepts::is_invocable_result_convertible<U, F, T &&>)
+            requires(concepts::is_object<U> && concepts::is_invocable_result_convertible<U, F, T&&>)
         {
             if (!self.has_value) {
                 return std::move(fallback);
@@ -522,8 +493,9 @@ namespace types::core {
         template <class D, class F>
         [[nodiscard]]
         constexpr auto map_or_else(this Option&& self, D&& fallback, F&& f) -> std::remove_cvref_t<std::invoke_result_t<F, T&&>>
-            requires(concepts::is_invocable_result_convertible<std::remove_cvref_t<std::invoke_result_t<F, T &&>>, F, T &&>
-                && concepts::is_invocable_result_convertible<std::remove_cvref_t<std::invoke_result_t<F, T &&>>, D>)
+            requires(concepts::is_invocable_result_convertible<std::remove_cvref_t<std::invoke_result_t<F, T&&>>, F, T&&>
+                && concepts::is_invocable_result_convertible<std::remove_cvref_t<std::invoke_result_t<F, T&&>>, D>
+                && concepts::is_object<std::remove_cvref_t<std::invoke_result_t<F, T&&>>>)
         {
             using U = std::remove_cvref_t<std::invoke_result_t<F, T&&>>;
             return self.has_value ? static_cast<U>(std::invoke(std::forward<F>(f), std::forward<T>(self.storage.value)))
@@ -536,8 +508,9 @@ namespace types::core {
         template <class F>
         [[nodiscard]]
         constexpr auto map_or_default(this Option&& self, F&& f) -> std::remove_cvref_t<std::invoke_result_t<F, T&&>>
-            requires(concepts::is_invocable_result_convertible<std::remove_cvref_t<std::invoke_result_t<F, T &&>>, F, T &&>
-                && concepts::default_initializable<std::remove_cvref_t<std::invoke_result_t<F, T &&>>>)
+            requires(concepts::is_invocable_result_convertible<std::remove_cvref_t<std::invoke_result_t<F, T&&>>, F, T&&>
+                && concepts::is_object<std::remove_cvref_t<std::invoke_result_t<F, T&&>>>
+                && concepts::default_initializable<std::remove_cvref_t<std::invoke_result_t<F, T&&>>>)
         {
             using U = std::remove_cvref_t<std::invoke_result_t<F, T&&>>;
 
