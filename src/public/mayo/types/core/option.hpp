@@ -448,7 +448,7 @@ namespace types::core {
          */
         [[nodiscard]]
         constexpr auto unwrap_or_default(this Option&& self) -> T
-            requires(concepts::copy_constructible<T> && concepts::default_initializable<T>)
+            requires(concepts::default_initializable<T>)
         {
             return self.has_value ? std::forward<T>(self.storage.value) : T{};
         }
@@ -499,6 +499,53 @@ namespace types::core {
             }
 
             return std::move(self);
+        }
+
+        /**
+         * 値を変換して取り出す。Noneなら代替値を返す
+         */
+        template <class U, class F>
+        [[nodiscard]]
+        constexpr auto map_or(this Option&& self, U fallback, F&& f) -> U
+            requires(concepts::is_invocable_result_convertible<U, F, T &&>)
+        {
+            if (!self.has_value) {
+                return std::move(fallback);
+            }
+
+            return static_cast<U>(std::invoke(std::forward<F>(f), std::forward<T>(self.storage.value)));
+        }
+
+        /**
+         * 値を変換して取り出す。Noneなら遅延評価で代替値を返す
+         */
+        template <class D, class F>
+        [[nodiscard]]
+        constexpr auto map_or_else(this Option&& self, D&& fallback, F&& f) -> std::remove_cvref_t<std::invoke_result_t<F, T&&>>
+            requires(concepts::is_invocable_result_convertible<std::remove_cvref_t<std::invoke_result_t<F, T &&>>, F, T &&>
+                && concepts::is_invocable_result_convertible<std::remove_cvref_t<std::invoke_result_t<F, T &&>>, D>)
+        {
+            using U = std::remove_cvref_t<std::invoke_result_t<F, T&&>>;
+            return self.has_value ? static_cast<U>(std::invoke(std::forward<F>(f), std::forward<T>(self.storage.value)))
+                                  : static_cast<U>(std::invoke(std::forward<D>(fallback)));
+        }
+
+        /**
+         * 値を変換して取り出す。Noneなら変換先型のデフォルト値を返す
+         */
+        template <class F>
+        [[nodiscard]]
+        constexpr auto map_or_default(this Option&& self, F&& f) -> std::remove_cvref_t<std::invoke_result_t<F, T&&>>
+            requires(concepts::is_invocable_result_convertible<std::remove_cvref_t<std::invoke_result_t<F, T &&>>, F, T &&>
+                && concepts::default_initializable<std::remove_cvref_t<std::invoke_result_t<F, T &&>>>)
+        {
+            using U = std::remove_cvref_t<std::invoke_result_t<F, T&&>>;
+
+            if (!self.has_value) {
+                return U{};
+            }
+
+            return static_cast<U>(std::invoke(std::forward<F>(f), std::forward<T>(self.storage.value)));
         }
 
       private:
