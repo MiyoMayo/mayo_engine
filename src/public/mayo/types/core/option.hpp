@@ -1,7 +1,6 @@
 #pragma once
 
 #include "mayo/types/concepts.hpp"
-#include "mayo/types/concepts/functional.hpp"
 #include "mayo/types/concepts/std.hpp"
 #include "mayo/types/core/numeric.hpp"
 #include "mayo/types/core/ref.hpp"
@@ -156,7 +155,9 @@ namespace types::core {
         /**
          * ムーブ代入する
          */
-        constexpr auto operator=(Option&& other) noexcept(concepts::is_nothrow_move_constructible<T>) -> Option&
+        constexpr auto operator=(Option&& other) noexcept(
+            concepts::is_nothrow_move_constructible<T>
+            && (!concepts::assignable_from<T&, T&&> || std::is_nothrow_assignable_v<T&, T&&>)) -> Option&
             requires(concepts::move_constructible<T>)
         {
             return assign_from_other(std::move(other));
@@ -250,7 +251,7 @@ namespace types::core {
         template <class Self, class Pred>
         [[nodiscard]]
         constexpr auto is_some_and(this Self&& self, Pred&& pred) -> bool
-            requires(concepts::predicate_for<Pred, decltype(std::forward_like<Self>(self.storage.value))>)
+            requires(concepts::predicate<Pred, decltype(std::forward_like<Self>(self.storage.value))>)
         {
             if (!self.has_value) {
                 return false;
@@ -270,7 +271,7 @@ namespace types::core {
         template <class Self, class Pred>
         [[nodiscard]]
         constexpr auto is_none_or(this Self&& self, Pred&& pred) -> bool
-            requires(concepts::predicate_for<Pred, decltype(std::forward_like<Self>(self.storage.value))>)
+            requires(concepts::predicate<Pred, decltype(std::forward_like<Self>(self.storage.value))>)
         {
             if (!self.has_value) {
                 return true;
@@ -563,7 +564,7 @@ namespace types::core {
         template <class Self, class Pred>
         [[nodiscard]]
         constexpr auto filter(this Self&& self, Pred&& pred) -> Option
-            requires(concepts::predicate_for<Pred, const T&> && concepts::constructible_from<Option, Self &&>)
+            requires(concepts::predicate<Pred, const T&> && concepts::constructible_from<Option, Self &&>)
         {
             if (!self.has_value) {
                 return NONE;
@@ -715,7 +716,7 @@ namespace types::core {
          */
         template <class Pred>
         constexpr auto take_if(this Option& self, Pred&& pred) -> Option
-            requires(concepts::move_constructible<T> && concepts::predicate_for<Pred, T&>)
+            requires(concepts::move_constructible<T> && concepts::predicate<Pred, T&>)
         {
             if (!self.has_value) {
                 return NONE;
