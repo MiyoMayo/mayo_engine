@@ -443,8 +443,8 @@ namespace types::core {
         template <class F>
         [[nodiscard]]
         constexpr auto map(this Option&& self, F&& f) -> Option<std::remove_cvref_t<std::invoke_result_t<F, T&&>>>
-            requires(concepts::is_invocable_result_convertible<std::remove_cvref_t<std::invoke_result_t<F, T&&>>, F, T&&>
-                && concepts::is_object<std::remove_cvref_t<std::invoke_result_t<F, T&&>>>)
+            requires(concepts::is_invocable_result_convertible<std::remove_cvref_t<std::invoke_result_t<F, T &&>>, F, T &&>
+                && concepts::is_object<std::remove_cvref_t<std::invoke_result_t<F, T &&>>>)
         {
             using U = std::remove_cvref_t<std::invoke_result_t<F, T&&>>;
 
@@ -478,7 +478,7 @@ namespace types::core {
         template <class U, class F>
         [[nodiscard]]
         constexpr auto map_or(this Option&& self, U fallback, F&& f) -> U
-            requires(concepts::is_object<U> && concepts::is_invocable_result_convertible<U, F, T&&>)
+            requires(concepts::is_object<U> && concepts::is_invocable_result_convertible<U, F, T &&>)
         {
             if (!self.has_value) {
                 return std::move(fallback);
@@ -493,9 +493,9 @@ namespace types::core {
         template <class D, class F>
         [[nodiscard]]
         constexpr auto map_or_else(this Option&& self, D&& fallback, F&& f) -> std::remove_cvref_t<std::invoke_result_t<F, T&&>>
-            requires(concepts::is_invocable_result_convertible<std::remove_cvref_t<std::invoke_result_t<F, T&&>>, F, T&&>
-                && concepts::is_invocable_result_convertible<std::remove_cvref_t<std::invoke_result_t<F, T&&>>, D>
-                && concepts::is_object<std::remove_cvref_t<std::invoke_result_t<F, T&&>>>)
+            requires(concepts::is_invocable_result_convertible<std::remove_cvref_t<std::invoke_result_t<F, T &&>>, F, T &&>
+                && concepts::is_invocable_result_convertible<std::remove_cvref_t<std::invoke_result_t<F, T &&>>, D>
+                && concepts::is_object<std::remove_cvref_t<std::invoke_result_t<F, T &&>>>)
         {
             using U = std::remove_cvref_t<std::invoke_result_t<F, T&&>>;
             return self.has_value ? static_cast<U>(std::invoke(std::forward<F>(f), std::forward<T>(self.storage.value)))
@@ -508,9 +508,9 @@ namespace types::core {
         template <class F>
         [[nodiscard]]
         constexpr auto map_or_default(this Option&& self, F&& f) -> std::remove_cvref_t<std::invoke_result_t<F, T&&>>
-            requires(concepts::is_invocable_result_convertible<std::remove_cvref_t<std::invoke_result_t<F, T&&>>, F, T&&>
-                && concepts::is_object<std::remove_cvref_t<std::invoke_result_t<F, T&&>>>
-                && concepts::default_initializable<std::remove_cvref_t<std::invoke_result_t<F, T&&>>>)
+            requires(concepts::is_invocable_result_convertible<std::remove_cvref_t<std::invoke_result_t<F, T &&>>, F, T &&>
+                && concepts::is_object<std::remove_cvref_t<std::invoke_result_t<F, T &&>>>
+                && concepts::default_initializable<std::remove_cvref_t<std::invoke_result_t<F, T &&>>>)
         {
             using U = std::remove_cvref_t<std::invoke_result_t<F, T&&>>;
 
@@ -519,6 +519,37 @@ namespace types::core {
             }
 
             return static_cast<U>(std::invoke(std::forward<F>(f), std::forward<T>(self.storage.value)));
+        }
+
+        /**
+         * Someなら別のOptionを返し、NoneならNoneを返す
+         *
+         * @note C++の予約語を避けるため名前は `and_other`
+         */
+        template <class U>
+        [[nodiscard]]
+        constexpr auto and_other(this Option&& self, Option<U> opt) -> Option<U> {
+            return self.has_value ? std::move(opt) : NONE;
+        }
+
+        /**
+         * Someなら関数を適用してOptionを返し、NoneならNoneを返す
+         *
+         * - Some(T) -> f(T&&)
+         * - None    -> None
+         */
+        template <class F>
+        [[nodiscard]]
+        constexpr auto and_then(this Option&& self, F&& f) -> std::remove_cvref_t<std::invoke_result_t<F, T&&>>
+            requires(concepts::is_invocable_result_convertible<std::remove_cvref_t<std::invoke_result_t<F, T&&>>, F, T&&> && concepts::is_option_type<std::remove_cvref_t<std::invoke_result_t<F, T&&>>>)
+        {
+            using UOpt = std::remove_cvref_t<std::invoke_result_t<F, T&&>>;
+
+            if (!self.has_value) {
+                return NONE;
+            }
+
+            return static_cast<UOpt>(std::invoke(std::forward<F>(f), std::forward<T>(self.storage.value)));
         }
 
       private:
