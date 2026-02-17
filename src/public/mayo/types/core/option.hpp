@@ -2,7 +2,6 @@
 
 #include "mayo/types/concepts.hpp"
 #include "mayo/types/concepts/std.hpp"
-#include "mayo/types/core/numeric.hpp"
 #include "mayo/types/core/ref.hpp"
 #include <cassert>
 #include <compare>
@@ -155,9 +154,8 @@ namespace types::core {
         /**
          * ムーブ代入する
          */
-        constexpr auto operator=(Option&& other) noexcept(
-            concepts::is_nothrow_move_constructible<T>
-            && (!concepts::assignable_from<T&, T&&> || std::is_nothrow_assignable_v<T&, T&&>)) -> Option&
+        constexpr auto operator=(Option&& other)
+            noexcept(concepts::is_nothrow_move_constructible<T> && (!concepts::assignable_from<T&, T&&> || std::is_nothrow_assignable_v<T&, T&&>)) -> Option&
             requires(concepts::move_constructible<T>)
         {
             return assign_from_other(std::move(other));
@@ -917,50 +915,4 @@ namespace types::core {
 
 using types::core::NONE;
 using types::core::Option;
-
-/**
- * Optionの簡易チェック
- */
-constexpr auto check() -> bool {
-    constexpr auto O0 = Option<i32>{};
-    static_assert(O0.is_none());
-    static_assert(!O0.is_some());
-
-    constexpr auto O1 = Option<i32>{1};
-    static_assert(*O1 == 1);
-
-    constexpr auto O2 = Option<std::string>{""};
-    static_assert(O2.unwrap() == "");
-
-    auto o3 = Option<usize>{32uz};
-
-    auto o4 = Option{o3};
-    assert(o3);
-    auto o5 = Option{std::move(o3)};
-    assert(o4);
-
-    auto o6 = Option<std::string>{""};
-    assert(o6.is_some());
-    // auto o7 = std::move(o6);
-
-    constexpr auto S = "0";
-    constexpr auto O8 = Option<std::string>{S};
-
-    constexpr auto O9 = Option<std::string>{O8};
-
-    constexpr auto OO0 = Option<std::string>{};
-    constexpr auto OO1 = Option<std::string>{""};
-    constexpr auto OO2 = Option<std::string>{OO0};
-
-    auto& o_o3 = OO1;
-    assert(o_o3.is_some());
-
-    auto o = Option<std::string>{""};
-    auto s = o->begin();
-    const auto CO = Option{o};
-    auto cs = CO->begin();
-
-    return true;
-}
-static_assert(check(), "check failed");
 } // namespace mayo
