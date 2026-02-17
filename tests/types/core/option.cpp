@@ -763,6 +763,32 @@ auto main() -> mayo::i32 {
     }
 
     {
+        auto some = mayo::Option<mayo::i32>{1};
+        auto old = some.replace(2);
+        assert(old.is_some());
+        assert(*old == 1);
+        assert(some.is_some());
+        assert(*some == 2);
+    }
+
+    {
+        auto none = mayo::Option<mayo::i32>{mayo::NONE};
+        auto old = none.replace(2);
+        assert(old.is_none());
+        assert(none.is_some());
+        assert(*none == 2);
+    }
+
+    {
+        auto text = mayo::Option<std::string>{"self"};
+        auto old = text.replace(*text);
+        assert(old.is_some());
+        assert(*old == "self");
+        assert(text.is_some());
+        assert(*text == "self");
+    }
+
+    {
         static_assert(std::equality_comparable_with<mayo::i32, mayo::i32>);
         static_assert(std::equality_comparable_with<mayo::Option<mayo::i32>, mayo::Option<mayo::i32>>);
         static_assert(std::equality_comparable_with<mayo::Option<mayo::i32>*, mayo::Option<mayo::i32>*>);
@@ -848,9 +874,11 @@ auto main() -> mayo::i32 {
         static_assert(std::is_same_v<decltype(std::declval<mayo::Option<mayo::i32>&>().get_or_insert_with([] { return 0; })), mayo::i32&>);
         static_assert(std::is_same_v<decltype(std::declval<mayo::Option<mayo::i32>&>().take()), mayo::Option<mayo::i32>>);
         static_assert(std::is_same_v<decltype(std::declval<mayo::Option<mayo::i32>&>().take_if([](mayo::i32&) { return true; })), mayo::Option<mayo::i32>>);
+        static_assert(std::is_same_v<decltype(std::declval<mayo::Option<mayo::i32>&>().replace(0)), mayo::Option<mayo::i32>>);
         static_assert(requires(mayo::Option<std::string>& o) {
             o.insert("x");
             o.get_or_insert("x");
+            o.replace("x");
         });
         static_assert(requires(mayo::Option<MoveOnly>&& o) {
             std::move(o).filter([](const MoveOnly&) { return true; });

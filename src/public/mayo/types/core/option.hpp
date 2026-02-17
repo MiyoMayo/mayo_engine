@@ -728,6 +728,32 @@ namespace types::core {
             return self.take();
         }
 
+        /**
+         * 値を新しい値に置き換え、置き換え前の値を返す
+         *
+         * - Some(T) -> 旧値をSomeで返し、新値を格納する
+         * - None    -> Noneを返し、新値を格納する
+         */
+        template <class U>
+        constexpr auto replace(this Option& self, U&& value) -> Option
+            requires(concepts::constructible_from<T, U &&> && concepts::constructible_from<T, T &&>)
+        {
+            // o.replace(*o) の自己参照は破棄前に退避し、値を維持する
+            if constexpr (concepts::is_lvalue_ref<U&&> && concepts::same_as<std::remove_cvref_t<U>, T>) {
+                if (self.has_value && std::addressof(self.storage.value) == std::addressof(value)) {
+                    return Option{self.storage.value};
+                }
+            }
+
+            auto out = Option{NONE};
+            if (self.has_value) {
+                out.emplace(std::move(self.storage.value));
+            }
+
+            self.emplace(std::forward<U>(value));
+            return out;
+        }
+
       private:
         /**
          * 値を再構築する
