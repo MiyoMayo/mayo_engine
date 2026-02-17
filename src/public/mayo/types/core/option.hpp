@@ -396,8 +396,7 @@ namespace types::core {
         template <class Self, class U>
         [[nodiscard]]
         constexpr auto unwrap_or(this Self&& self, U&& fallback) -> T
-            requires(concepts::constructible_from<T, decltype(std::forward_like<Self>(self.storage.value))>
-                && concepts::constructible_from<T, U&&>)
+            requires(concepts::constructible_from<T, decltype(std::forward_like<Self>(self.storage.value))> && concepts::constructible_from<T, U &&>)
         {
             return self.has_value ? static_cast<T>(std::forward_like<Self>(self.storage.value)) : static_cast<T>(std::forward<U>(fallback));
         }
@@ -631,7 +630,7 @@ namespace types::core {
          */
         template <class U>
         constexpr auto insert(this Option& self, U&& value) -> T&
-            requires(concepts::constructible_from<T, U&&>)
+            requires(concepts::constructible_from<T, U &&>)
         {
             // o.insert(*o) の自己参照は再構築せず、そのまま返す
             if constexpr (concepts::is_lvalue_ref<U&&> && concepts::same_as<std::remove_cvref_t<U>, T>) {
@@ -650,7 +649,7 @@ namespace types::core {
          */
         template <class U>
         constexpr auto get_or_insert(this Option& self, U&& value) -> T&
-            requires(concepts::constructible_from<T, U&&>)
+            requires(concepts::constructible_from<T, U &&>)
         {
             if (self.has_value) {
                 return self.storage.value;
@@ -686,6 +685,47 @@ namespace types::core {
             }
 
             return self.emplace(std::invoke(std::forward<F>(f)));
+        }
+
+        /**
+         * 現在の値を取り出してNoneにする
+         *
+         * - Some(T) -> Some(T) を返して self を None にする
+         * - None    -> None を返す
+         */
+        constexpr auto take(this Option& self) -> Option
+            requires(concepts::move_constructible<T>)
+        {
+            if (!self.has_value) {
+                return NONE;
+            }
+
+            auto out = Option{std::move(self.storage.value)};
+            self.destroy();
+
+            return out;
+        }
+
+        /**
+         * 述語が真のときだけ値を取り出してNoneにする
+         *
+         * - Some(T) && pred(&mut T) == true  -> Some(T) を返して self を None にする
+         * - Some(T) && pred(&mut T) == false -> None を返して self を保持する
+         * - None                             -> None
+         */
+        template <class Pred>
+        constexpr auto take_if(this Option& self, Pred&& pred) -> Option
+            requires(concepts::move_constructible<T> && concepts::predicate_for<Pred, T&>)
+        {
+            if (!self.has_value) {
+                return NONE;
+            }
+
+            if (!std::invoke(std::forward<Pred>(pred), self.storage.value)) {
+                return NONE;
+            }
+
+            return self.take();
         }
 
       private:
