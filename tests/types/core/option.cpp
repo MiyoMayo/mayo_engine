@@ -516,6 +516,34 @@ auto main() -> mayo::i32 {
     }
 
     {
+        auto some = mayo::Option<mayo::i32>{10};
+        auto kept = std::move(some).filter([](const mayo::i32& v) {
+            return v == 10;
+        });
+        assert(kept.is_some());
+        assert(*kept == 10);
+    }
+
+    {
+        auto some = mayo::Option<mayo::i32>{10};
+        auto dropped = std::move(some).filter([](const mayo::i32& v) {
+            return v == 0;
+        });
+        assert(dropped.is_none());
+    }
+
+    {
+        auto none = mayo::Option<mayo::i32>{mayo::NONE};
+        auto called = 0;
+        auto result = std::move(none).filter([&](const mayo::i32&) {
+            ++called;
+            return true;
+        });
+        assert(result.is_none());
+        assert(called == 0);
+    }
+
+    {
         static_assert(std::equality_comparable_with<mayo::i32, mayo::i32>);
         static_assert(std::equality_comparable_with<mayo::Option<mayo::i32>, mayo::Option<mayo::i32>>);
         static_assert(std::equality_comparable_with<mayo::Option<mayo::i32>*, mayo::Option<mayo::i32>*>);
@@ -591,6 +619,11 @@ auto main() -> mayo::i32 {
         static_assert(std::is_same_v<decltype(std::declval<mayo::Option<std::string>&&>().map_or_default([](std::string&& s) { return s.size(); })), std::size_t>);
         static_assert(std::is_same_v<decltype(std::declval<mayo::Option<mayo::i32>&&>().and_other(std::declval<mayo::Option<std::size_t>>())), mayo::Option<std::size_t>>);
         static_assert(std::is_same_v<decltype(std::declval<mayo::Option<mayo::i32>&&>().and_then([](mayo::i32&& v) { return mayo::Option<std::size_t>{static_cast<std::size_t>(v)}; })), mayo::Option<std::size_t>>);
+        static_assert(std::is_same_v<decltype(std::declval<mayo::Option<mayo::i32>&&>().filter([](const mayo::i32&) { return true; })), mayo::Option<mayo::i32>>);
+        static_assert(requires(mayo::Option<MoveOnly>&& o) {
+            std::move(o).filter([](const MoveOnly&) { return true; });
+        });
+        static_assert(!mayo::concepts::constructible_from<mayo::Option<MoveOnly>, mayo::Option<MoveOnly>&>);
 
         static_assert(noexcept(mayo::Option<NoThrowMove>{std::declval<mayo::Option<NoThrowMove>&&>()}));
         static_assert(!noexcept(mayo::Option<ThrowMove>{std::declval<mayo::Option<ThrowMove>&&>()}));

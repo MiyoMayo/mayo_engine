@@ -541,7 +541,8 @@ namespace types::core {
         template <class F>
         [[nodiscard]]
         constexpr auto and_then(this Option&& self, F&& f) -> std::remove_cvref_t<std::invoke_result_t<F, T&&>>
-            requires(concepts::is_invocable_result_convertible<std::remove_cvref_t<std::invoke_result_t<F, T&&>>, F, T&&> && concepts::is_option_type<std::remove_cvref_t<std::invoke_result_t<F, T&&>>>)
+            requires(concepts::is_invocable_result_convertible<std::remove_cvref_t<std::invoke_result_t<F, T &&>>, F, T &&>
+                && concepts::is_option_type<std::remove_cvref_t<std::invoke_result_t<F, T &&>>>)
         {
             using UOpt = std::remove_cvref_t<std::invoke_result_t<F, T&&>>;
 
@@ -550,6 +551,22 @@ namespace types::core {
             }
 
             return static_cast<UOpt>(std::invoke(std::forward<F>(f), std::forward<T>(self.storage.value)));
+        }
+
+        template <class Self, class Pred>
+        [[nodiscard]]
+        constexpr auto filter(this Self&& self, Pred&& pred) -> Option
+            requires(concepts::predicate_for<Pred, const T&> && concepts::constructible_from<Option, Self &&>)
+        {
+            if (!self.has_value) {
+                return NONE;
+            }
+
+            if (std::invoke(std::forward<Pred>(pred), std::as_const(self.storage.value))) {
+                return std::forward<Self>(self);
+            }
+
+            return NONE;
         }
 
       private:
