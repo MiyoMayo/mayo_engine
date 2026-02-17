@@ -553,6 +553,13 @@ namespace types::core {
             return static_cast<UOpt>(std::invoke(std::forward<F>(f), std::forward<T>(self.storage.value)));
         }
 
+        /**
+         * 述語が真のときだけSomeを残し、それ以外はNoneにする
+         *
+         * - Some(T) && pred(&T) == true  -> Some(T)
+         * - Some(T) && pred(&T) == false -> None
+         * - None                         -> None
+         */
         template <class Self, class Pred>
         [[nodiscard]]
         constexpr auto filter(this Self&& self, Pred&& pred) -> Option
@@ -567,6 +574,34 @@ namespace types::core {
             }
 
             return NONE;
+        }
+
+        /**
+         * Someなら自身を返し、Noneなら別のOptionを返す
+         *
+         * @note C++の予約語を避けるため名前は `or_other`
+         */
+        [[nodiscard]]
+        constexpr auto or_other(this Option&& self, Option opt) -> Option {
+            return self.has_value ? std::move(self) : std::move(opt);
+        }
+
+        /**
+         * Someなら自身を返し、Noneなら遅延評価で別のOptionを返す
+         *
+         * - Some(T) -> Some(T)
+         * - None    -> f()
+         */
+        template <class F>
+        [[nodiscard]]
+        constexpr auto or_else(this Option&& self, F&& f) -> Option
+            requires(concepts::is_invocable_result_convertible<Option, F>)
+        {
+            if (self.has_value) {
+                return std::move(self);
+            }
+
+            return std::invoke(std::forward<F>(f));
         }
 
       private:

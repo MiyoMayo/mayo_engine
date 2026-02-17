@@ -544,6 +544,44 @@ auto main() -> mayo::i32 {
     }
 
     {
+        auto some = mayo::Option<mayo::i32>{7};
+        auto result = std::move(some).or_other(mayo::Option<mayo::i32>{99});
+        assert(result.is_some());
+        assert(*result == 7);
+    }
+
+    {
+        auto none = mayo::Option<mayo::i32>{mayo::NONE};
+        auto result = std::move(none).or_other(mayo::Option<mayo::i32>{99});
+        assert(result.is_some());
+        assert(*result == 99);
+    }
+
+    {
+        auto some = mayo::Option<mayo::i32>{7};
+        auto called = 0;
+        auto result = std::move(some).or_else([&] {
+            ++called;
+            return mayo::Option<mayo::i32>{99};
+        });
+        assert(result.is_some());
+        assert(*result == 7);
+        assert(called == 0);
+    }
+
+    {
+        auto none = mayo::Option<mayo::i32>{mayo::NONE};
+        auto called = 0;
+        auto result = std::move(none).or_else([&] {
+            ++called;
+            return mayo::Option<mayo::i32>{99};
+        });
+        assert(result.is_some());
+        assert(*result == 99);
+        assert(called == 1);
+    }
+
+    {
         static_assert(std::equality_comparable_with<mayo::i32, mayo::i32>);
         static_assert(std::equality_comparable_with<mayo::Option<mayo::i32>, mayo::Option<mayo::i32>>);
         static_assert(std::equality_comparable_with<mayo::Option<mayo::i32>*, mayo::Option<mayo::i32>*>);
@@ -620,6 +658,8 @@ auto main() -> mayo::i32 {
         static_assert(std::is_same_v<decltype(std::declval<mayo::Option<mayo::i32>&&>().and_other(std::declval<mayo::Option<std::size_t>>())), mayo::Option<std::size_t>>);
         static_assert(std::is_same_v<decltype(std::declval<mayo::Option<mayo::i32>&&>().and_then([](mayo::i32&& v) { return mayo::Option<std::size_t>{static_cast<std::size_t>(v)}; })), mayo::Option<std::size_t>>);
         static_assert(std::is_same_v<decltype(std::declval<mayo::Option<mayo::i32>&&>().filter([](const mayo::i32&) { return true; })), mayo::Option<mayo::i32>>);
+        static_assert(std::is_same_v<decltype(std::declval<mayo::Option<mayo::i32>&&>().or_other(std::declval<mayo::Option<mayo::i32>>())), mayo::Option<mayo::i32>>);
+        static_assert(std::is_same_v<decltype(std::declval<mayo::Option<mayo::i32>&&>().or_else([] { return mayo::Option<mayo::i32>{0}; })), mayo::Option<mayo::i32>>);
         static_assert(requires(mayo::Option<MoveOnly>&& o) {
             std::move(o).filter([](const MoveOnly&) { return true; });
         });
