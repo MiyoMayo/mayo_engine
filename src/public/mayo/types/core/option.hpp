@@ -622,6 +622,62 @@ namespace types::core {
             return std::move(opt);
         }
 
+        /**
+         * 値を挿入し、既存値があれば置き換える
+         *
+         * - Some(T) <- value: 既存値を破棄して置き換える
+         * - None    <- value: 新規に値を構築する
+         */
+        constexpr auto insert(this Option& self, T value) -> T&
+            requires(concepts::move_constructible<T>)
+        {
+            return self.emplace(std::move(value));
+        }
+
+        /**
+         * 値があればそれを返し、無ければ引数の値を挿入して返す
+         *
+         * @note 引数 `value` はSomeでも評価済み
+         */
+        constexpr auto get_or_insert(this Option& self, T value) -> T&
+            requires(concepts::move_constructible<T>)
+        {
+            if (self.has_value) {
+                return self.storage.value;
+            }
+
+            return self.emplace(std::move(value));
+        }
+
+        /**
+         * 値があればそれを返し、無ければデフォルト値を挿入して返す
+         */
+        constexpr auto get_or_insert_default(this Option& self) -> T&
+            requires(concepts::default_initializable<T>)
+        {
+            if (self.has_value) {
+                return self.storage.value;
+            }
+
+            return self.emplace();
+        }
+
+        /**
+         * 値があればそれを返し、無ければ遅延評価で生成した値を挿入して返す
+         *
+         * @note `f` はNoneのときだけ呼ばれる
+         */
+        template <class F>
+        constexpr auto get_or_insert_with(this Option& self, F&& f) -> T&
+            requires(concepts::move_constructible<T> && concepts::is_invocable_result_convertible<T, F>)
+        {
+            if (self.has_value) {
+                return self.storage.value;
+            }
+
+            return self.emplace(std::invoke(std::forward<F>(f)));
+        }
+
       private:
         /**
          * 値を再構築する
