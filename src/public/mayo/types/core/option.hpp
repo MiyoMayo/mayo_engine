@@ -604,6 +604,24 @@ namespace types::core {
             return std::invoke(std::forward<F>(f));
         }
 
+        /**
+         * 片方だけSomeならそのSomeを返し、両方Some/両方NoneならNoneを返す
+         *
+         * @note C++の予約語を避けるため名前は `xor_other`
+         */
+        [[nodiscard]]
+        constexpr auto xor_other(this Option&& self, Option opt) -> Option {
+            if (self.has_value == opt.has_value) {
+                return NONE;
+            }
+
+            if (self.has_value) {
+                return std::move(self);
+            }
+
+            return std::move(opt);
+        }
+
       private:
         /**
          * 値を再構築する

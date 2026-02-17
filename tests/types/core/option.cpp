@@ -582,6 +582,36 @@ auto main() -> mayo::i32 {
     }
 
     {
+        auto lhs = mayo::Option<mayo::i32>{1};
+        auto rhs = mayo::Option<mayo::i32>{mayo::NONE};
+        auto result = std::move(lhs).xor_other(std::move(rhs));
+        assert(result.is_some());
+        assert(*result == 1);
+    }
+
+    {
+        auto lhs = mayo::Option<mayo::i32>{mayo::NONE};
+        auto rhs = mayo::Option<mayo::i32>{2};
+        auto result = std::move(lhs).xor_other(std::move(rhs));
+        assert(result.is_some());
+        assert(*result == 2);
+    }
+
+    {
+        auto lhs = mayo::Option<mayo::i32>{1};
+        auto rhs = mayo::Option<mayo::i32>{2};
+        auto result = std::move(lhs).xor_other(std::move(rhs));
+        assert(result.is_none());
+    }
+
+    {
+        auto lhs = mayo::Option<mayo::i32>{mayo::NONE};
+        auto rhs = mayo::Option<mayo::i32>{mayo::NONE};
+        auto result = std::move(lhs).xor_other(std::move(rhs));
+        assert(result.is_none());
+    }
+
+    {
         static_assert(std::equality_comparable_with<mayo::i32, mayo::i32>);
         static_assert(std::equality_comparable_with<mayo::Option<mayo::i32>, mayo::Option<mayo::i32>>);
         static_assert(std::equality_comparable_with<mayo::Option<mayo::i32>*, mayo::Option<mayo::i32>*>);
@@ -660,6 +690,7 @@ auto main() -> mayo::i32 {
         static_assert(std::is_same_v<decltype(std::declval<mayo::Option<mayo::i32>&&>().filter([](const mayo::i32&) { return true; })), mayo::Option<mayo::i32>>);
         static_assert(std::is_same_v<decltype(std::declval<mayo::Option<mayo::i32>&&>().or_other(std::declval<mayo::Option<mayo::i32>>())), mayo::Option<mayo::i32>>);
         static_assert(std::is_same_v<decltype(std::declval<mayo::Option<mayo::i32>&&>().or_else([] { return mayo::Option<mayo::i32>{0}; })), mayo::Option<mayo::i32>>);
+        static_assert(std::is_same_v<decltype(std::declval<mayo::Option<mayo::i32>&&>().xor_other(std::declval<mayo::Option<mayo::i32>>())), mayo::Option<mayo::i32>>);
         static_assert(requires(mayo::Option<MoveOnly>&& o) {
             std::move(o).filter([](const MoveOnly&) { return true; });
         });
