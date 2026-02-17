@@ -625,6 +625,13 @@ auto main() -> mayo::i32 {
     }
 
     {
+        auto value = mayo::Option<std::string>{"self"};
+        auto& self_ref = value.insert(*value);
+        assert(std::addressof(self_ref) == std::addressof(*value));
+        assert(*value == "self");
+    }
+
+    {
         auto none = mayo::Option<mayo::i32>{mayo::NONE};
         auto& inserted = none.get_or_insert(7);
         assert(inserted == 7);
@@ -634,6 +641,13 @@ auto main() -> mayo::i32 {
         auto& kept = some.get_or_insert(9);
         assert(kept == 3);
         assert(*some == 3);
+    }
+
+    {
+        auto text = mayo::Option<std::string>{mayo::NONE};
+        auto& inserted = text.get_or_insert("hello");
+        assert(inserted == "hello");
+        assert(*text == "hello");
     }
 
     {
@@ -766,6 +780,10 @@ auto main() -> mayo::i32 {
         static_assert(std::is_same_v<decltype(std::declval<mayo::Option<mayo::i32>&>().get_or_insert(0)), mayo::i32&>);
         static_assert(std::is_same_v<decltype(std::declval<mayo::Option<mayo::i32>&>().get_or_insert_default()), mayo::i32&>);
         static_assert(std::is_same_v<decltype(std::declval<mayo::Option<mayo::i32>&>().get_or_insert_with([] { return 0; })), mayo::i32&>);
+        static_assert(requires(mayo::Option<std::string>& o) {
+            o.insert("x");
+            o.get_or_insert("x");
+        });
         static_assert(requires(mayo::Option<MoveOnly>&& o) {
             std::move(o).filter([](const MoveOnly&) { return true; });
         });

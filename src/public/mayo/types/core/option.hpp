@@ -393,12 +393,13 @@ namespace types::core {
          * - Some(T) -> thisの値カテゴリに応じて値を返す
          * - None    -> fallback を返す
          */
-        template <class Self>
+        template <class Self, class U>
         [[nodiscard]]
-        constexpr auto unwrap_or(this Self&& self, T fallback) -> T
-            requires(concepts::constructible_from<T, decltype(std::forward_like<Self>(self.storage.value))>)
+        constexpr auto unwrap_or(this Self&& self, U&& fallback) -> T
+            requires(concepts::constructible_from<T, decltype(std::forward_like<Self>(self.storage.value))>
+                && concepts::constructible_from<T, U&&>)
         {
-            return self.has_value ? static_cast<T>(std::forward_like<Self>(self.storage.value)) : std::move(fallback);
+            return self.has_value ? static_cast<T>(std::forward_like<Self>(self.storage.value)) : static_cast<T>(std::forward<U>(fallback));
         }
 
         /**
@@ -628,10 +629,18 @@ namespace types::core {
          * - Some(T) <- value: 既存値を破棄して置き換える
          * - None    <- value: 新規に値を構築する
          */
-        constexpr auto insert(this Option& self, T value) -> T&
-            requires(concepts::move_constructible<T>)
+        template <class U>
+        constexpr auto insert(this Option& self, U&& value) -> T&
+            requires(concepts::constructible_from<T, U&&>)
         {
-            return self.emplace(std::move(value));
+            // o.insert(*o) の自己参照は再構築せず、そのまま返す
+            if constexpr (concepts::is_lvalue_ref<U&&> && concepts::same_as<std::remove_cvref_t<U>, T>) {
+                if (self.has_value && std::addressof(self.storage.value) == std::addressof(value)) {
+                    return self.storage.value;
+                }
+            }
+
+            return self.emplace(std::forward<U>(value));
         }
 
         /**
@@ -639,14 +648,15 @@ namespace types::core {
          *
          * @note 引数 `value` はSomeでも評価済み
          */
-        constexpr auto get_or_insert(this Option& self, T value) -> T&
-            requires(concepts::move_constructible<T>)
+        template <class U>
+        constexpr auto get_or_insert(this Option& self, U&& value) -> T&
+            requires(concepts::constructible_from<T, U&&>)
         {
             if (self.has_value) {
                 return self.storage.value;
             }
 
-            return self.emplace(std::move(value));
+            return self.emplace(std::forward<U>(value));
         }
 
         /**
@@ -669,7 +679,7 @@ namespace types::core {
          */
         template <class F>
         constexpr auto get_or_insert_with(this Option& self, F&& f) -> T&
-            requires(concepts::move_constructible<T> && concepts::is_invocable_result_convertible<T, F>)
+            requires(concepts::is_invocable_result_convertible<T, F>)
         {
             if (self.has_value) {
                 return self.storage.value;
