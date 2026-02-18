@@ -1,3 +1,5 @@
+option(MAYO_TIDY_TESTS "Run clang-tidy for test targets" OFF)
+
 function(add_unit_test source_file)
   get_filename_component(dir "${source_file}" DIRECTORY)
   get_filename_component(name "${source_file}" NAME_WE)
@@ -17,6 +19,10 @@ function(add_unit_test source_file)
     PROPERTIES CXX_STANDARD 26
                CXX_STANDARD_REQUIRED YES
                CXX_EXTENSIONS NO)
+
+  if(CMAKE_CXX_CLANG_TIDY AND NOT MAYO_TIDY_TESTS)
+    set_property(TARGET ${target} PROPERTY CXX_CLANG_TIDY "")
+  endif()
 
   if(APPLE)
     set_property(TARGET ${target} PROPERTY OSX_ARCHITECTURES "arm64")
