@@ -5,7 +5,7 @@ labels: "type: feature"
 ---
 
 ## 目的
-- 
+- [ ] 
 
 ## 提案
 - 

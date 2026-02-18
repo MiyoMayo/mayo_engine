@@ -148,26 +148,6 @@ concept is_bounded_array = (std::is_bounded_array_v<T>);
 template <class T>
 concept is_unbounded_array = (std::is_unbounded_array_v<T>);
 
-// 構築可能判定
-template <class T, class... Args>
-concept is_constructible = (std::is_constructible_v<T, Args...>);
-
-// デフォルト構築可能判定
-template <class T>
-concept is_default_constructible = (std::is_default_constructible_v<T>);
-
-// コピー構築可能判定
-template <class T>
-concept is_copy_constructible = (std::is_copy_constructible_v<T>);
-
-// ムーブ構築可能判定
-template <class T>
-concept is_move_constructible = (std::is_move_constructible_v<T>);
-
-// 代入可能判定
-template <class Target, class Source>
-concept is_assignable = (std::is_assignable_v<Target, Source>);
-
 // コピー代入可能判定
 template <class T>
 concept is_copy_assignable = (std::is_copy_assignable_v<T>);
@@ -175,10 +155,6 @@ concept is_copy_assignable = (std::is_copy_assignable_v<T>);
 // ムーブ代入可能判定
 template <class T>
 concept is_move_assignable = (std::is_move_assignable_v<T>);
-
-// 破棄可能判定
-template <class T>
-concept is_destructible = (std::is_destructible_v<T>);
 
 // トリビアル構築可能判定
 template <class T, class... Args>
@@ -248,14 +224,6 @@ concept is_nothrow_destructible = (std::is_nothrow_destructible_v<T>);
 template <class T>
 concept has_virtual_destructor = (std::has_virtual_destructor_v<T>);
 
-// swap 可能判定（2型）
-template <class T, class U>
-concept is_swappable_with = (std::is_swappable_with_v<T, U>);
-
-// swap 可能判定
-template <class T>
-concept is_swappable = (std::is_swappable_v<T>);
-
 // noexcept swap 可能判定（2型）
 template <class T, class U>
 concept is_nothrow_swappable_with = (std::is_nothrow_swappable_with_v<T, U>);
@@ -268,17 +236,9 @@ concept is_nothrow_swappable = (std::is_nothrow_swappable_v<T>);
 template <class T>
 concept has_unique_object_representations = (std::has_unique_object_representations_v<T>);
 
-// 同型判定
-template <class T, class U>
-concept is_same = (std::is_same_v<T, U>);
-
 // 基底関係判定
 template <class Base, class Derived>
 concept is_base_of = (std::is_base_of_v<Base, Derived>);
-
-// 変換可能判定
-template <class From, class To>
-concept is_convertible = (std::is_convertible_v<From, To>);
 
 // noexcept 変換可能判定
 template <class From, class To>
@@ -291,10 +251,6 @@ concept ref_constructs_from_tmp = (std::reference_constructs_from_temporary_v<Re
 // 一時オブジェクトからの参照変換可否
 template <class Ref, class Source>
 concept ref_converts_from_tmp = (std::reference_converts_from_temporary_v<Ref, Source>);
-
-// 呼び出し可能判定
-template <class Func, class... Args>
-concept is_invocable = (std::is_invocable_v<Func, Args...>);
 
 // 呼び出し結果の変換可能判定
 template <class Result, class Func, class... Args>
